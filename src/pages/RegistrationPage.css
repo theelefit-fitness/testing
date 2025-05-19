@@ -1,0 +1,109 @@
+.registration-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.registration-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.registration-header h1 {
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+.registration-header p {
+  color: #666;
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.registration-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.benefits-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.benefits-section h2 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.benefits-list li {
+  display: flex;
+  margin-bottom: 25px;
+}
+
+.benefits-list li:last-child {
+  margin-bottom: 0;
+}
+
+.benefit-icon {
+  font-size: 2.5rem;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.benefit-text h3 {
+  color: #0ca789;
+  margin: 0 0 5px 0;
+  font-size: 1.3rem;
+}
+
+.benefit-text p {
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.form-section {
+  /* Styles are already in ExpertRegistrationForm.css */
+}
+
+@media (max-width: 992px) {
+  .registration-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .benefits-section {
+    order: 2;
+  }
+  
+  .form-section {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .registration-header h1 {
+    font-size: 2rem;
+  }
+  
+  .benefits-section h2 {
+    font-size: 1.5rem;
+  }
+  
+  .benefit-icon {
+    font-size: 2rem;
+  }
+} 
