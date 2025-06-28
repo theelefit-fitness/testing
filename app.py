@@ -324,7 +324,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Enable CORS for development
-CORS(app)
+CORS(app, origins="*")  # Allow all origins for development
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:

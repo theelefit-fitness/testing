@@ -117,12 +117,12 @@ const AIFitnessCoach = () => {
     // Use env variable if available, otherwise fallback to these options
     if (process.env.NODE_ENV === 'development') {
       return 'http://127.0.0.1:5000/chat'; // Local development
-    } // else {
+    }  else {
       // In production, use the EleFit API endpoint 
-     // return 'https://yantraprise.com/chat';
+      return 'https://testing-aolf.onrender.com/chat';
       // If you're hosting the backend on the same domain, use a relative URL:
       // return '/apps/coach-api/chat';
-   // }
+    }
   };
 
   const cleanItemText = (text) => {
