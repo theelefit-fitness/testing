@@ -1,0 +1,999 @@
+.expert-detail-container {
+  max-width: 1050px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #0ca789;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover {
+  color: #098f74;
+}
+
+.message {
+  padding: 15px;
+  border-radius: 5px;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.expert-profile {
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.expert-profile-header {
+  display: flex;
+  padding: 30px;
+  background-color: #f9f9f9;
+  align-items: flex-start;
+  border-bottom: 1px solid #eee;
+}
+
+.expert-image {
+  width: 250px !important;
+  height: 250px !important;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 30px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  border: 3px solid #CED95C !important;
+}
+
+.expert-image::after {
+  content: '';
+  position: absolute;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  border-radius: 50%;
+  top: -10px;
+  left: -10px;
+  opacity: 0.6;
+}
+
+.expert-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.expert-info {
+  flex: 1;
+  text-align: left;
+}
+
+.expert-info h1 {
+  margin-left:40px;
+  color: #4E3580;
+  text-align: left;
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
+
+.specialty-badge {
+  display: inline-block;
+  margin-left: 40px;
+}
+
+.specialty {
+  display: inline-block;
+  background-color: rgba(78, 53, 128, 0.08);
+  color: #4E3580;
+  font-weight: bold;
+  border: 2px solid #4E3580 !important; 
+  font-size: 1rem;
+  padding: 6px 15px;
+  border-radius: 20px;
+}
+
+.experience {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 1rem;
+  margin: 15px 0;
+  padding: 8px 15px;
+  background-color: rgba(78, 53, 128, 0.05);
+  border-radius: 8px;
+  width: auto;
+  text-align: left;
+}
+
+.experience::before {
+  content: "•";
+  margin-right: 8px;
+  color: #0ca789;
+  font-size: 1.2rem;
+}
+
+.qualifications {
+  margin: 25px 0;
+  padding: 20px;
+  background-color: rgba(78, 53, 128, 0.03);
+  border-radius: 8px;
+  border-left: 3px solid #4E3580;
+}
+
+.qualifications h3 {
+  color: #4E3580;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.qualifications p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.rating-section {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: rgba(78, 53, 128, 0.05);
+  border-radius: 10px;
+}
+
+.rating-label {
+  color: #4E3580;
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.rating-value {
+  color: #4E3580;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.rating-count {
+  color: #666;
+  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+.current-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  background-color: rgba(12, 167, 137, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.user-rating {
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  margin-top: 15px;
+  border-left: 3px solid #ffc107;
+}
+
+.user-rating h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.login-prompt-container {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.login-prompt {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.login-button {
+  background-color: #0ca789;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #098f74;
+}
+
+.star {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.star:hover:not(.readonly) {
+  transform: scale(1.3);
+  color: #ffc107;
+}
+
+.expert-bio {
+  padding: 30px;
+}
+
+.expert-bio h3 {
+  margin: 0 0 20px 0;
+  color: #4E3580;
+  text-align: left;
+  font-size: 1.5rem;
+}
+
+.expert-bio p {
+  margin: 0;
+  line-height: 1.6;
+  color: #666;
+  text-align: left;
+}
+
+.booking-section {
+  padding: 30px;
+}
+
+.booking-section h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.slots-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.no-slots {
+  color: #666;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .expert-profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .expert-image {
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+
+  .expert-info {
+    width: 100%;
+    text-align: center;
+  }
+
+  .expert-info h1 {
+    font-size: 1.8rem;
+    margin: 0 0 15px 0;
+    text-align: center;
+  }
+
+  .specialty-badge {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .specialty {
+    font-size: 1rem;
+    padding: 8px 16px;
+  }
+
+  .experience {
+    margin: 15px auto;
+    width: 90%;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+  }
+
+  .qualifications {
+    margin: 20px auto;
+    width: 90%;
+    padding: 15px;
+    text-align: left;
+  }
+
+  .qualifications h3 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    padding-left: 0;
+  }
+
+  .qualifications p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .expert-bio {
+    padding: 20px 15px;
+  }
+
+  .expert-bio h3 {
+    text-align: center;
+    font-size: 1.3rem;
+  }
+
+  .expert-bio p {
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .booking-section {
+    padding: 20px 15px;
+  }
+
+  .booking-section h2 {
+    text-align: center;
+    font-size: 1.3rem;
+  }
+
+  .slots-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .booking-slot {
+    padding: 12px;
+  }
+
+  .slot-time {
+    font-size: 0.95rem;
+  }
+
+  .comments-section {
+    padding: 20px 15px;
+    margin-top: 15px;
+    overflow: visible;
+  }
+
+  .comments-list {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .comment-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .comment-header {
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+  }
+
+  .comment-author {
+    padding-top:10px;
+    font-size: 0.75em;
+  }
+
+  .comment-date {
+    font-size: 0.8rem;
+  }
+
+  .comment-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 480px) {
+  .expert-detail-container {
+    padding: 0 15px;
+    margin: 20px auto;
+  }
+
+  .expert-profile-header {
+    padding: 20px;
+  }
+
+  .expert-image {
+    width: 200px !important;
+    height: 200px !important;
+  }
+
+  .expert-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .specialty {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+
+  .experience {
+    width: 95%;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .qualifications {
+    width: 95%;
+    padding: 12px;
+  }
+
+  .qualifications h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+
+  .qualifications p {
+    font-size: 0.9rem;
+  }
+
+  .expert-bio {
+    padding: 20px 15px;
+  }
+
+  .expert-bio h3 {
+    text-align: center;
+    font-size: 1.3rem;
+  }
+
+  .expert-bio p {
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .booking-section {
+    padding: 20px 15px;
+  }
+
+  .booking-section h2 {
+    text-align: center;
+    font-size: 1.3rem;
+  }
+
+  .slots-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .booking-slot {
+    padding: 10px;
+  }
+
+  .slot-time {
+    font-size: 0.9rem;
+  }
+
+  .book-button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+
+  .comment-form {
+    margin-bottom: 20px;
+  }
+
+  .comment-input {
+    padding: 12px;
+    min-height: 80px;
+    font-size: 0.9rem;
+  }
+
+  .post-comment-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+.booking-success {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.booking-success-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.booking-success-content h3 {
+  color: #4E3580;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+}
+
+.booking-details {
+  background-color: #f7f7f7;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.booking-details p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.redirect-message {
+  color: #666;
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.booking-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.view-dashboard-button {
+  background-color: #4E3580;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-dashboard-button:hover {
+  background-color: #372659;
+  transform: translateY(-2px);
+}
+
+/* Add styling for rate this expert section */
+.rating-stars {
+  margin: 10px 0;
+}
+
+/* Add a border around the rating section to make it stand out */
+.user-rating .rating-stars {
+  padding: 5px 0;
+}
+
+/* Rating Stars Styles */
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+}
+
+.rating-stars.interactive {
+  cursor: pointer;
+}
+
+.rating-stars.interactive:hover {
+  transform: scale(1.05);
+}
+
+.star {
+  color: #ddd;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: transform 0.3s ease, color 0.3s ease;
+  margin-right: 3px;
+  position: relative;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.star.filled {
+  color: #ffc107;
+  text-shadow: 0 0 2px rgba(255, 193, 7, 0.5);
+}
+
+.star.readonly {
+  cursor: default;
+}
+
+.star:hover:not(.readonly) {
+  transform: scale(1.3);
+  color: #ffc107;
+}
+
+@keyframes starPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.star.filled:not(.readonly) {
+  animation: starPulse 0.5s ease;
+}
+
+/* Booking Slot Styles */
+.booking-slot {
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.booking-slot.pending {
+  border-color: #ffd700;
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.booking-slot.booked {
+  border-color: #ccc;
+  background-color: #f5f5f5;
+  opacity: 0.8;
+}
+
+.booking-slot.booking {
+  border-color: #4E3580;
+  background-color: #f8f7fc;
+}
+
+.book-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.book-button:hover {
+  background-color: #45a049;
+}
+
+.book-button.pending {
+  background-color: #ffd700;
+  color: #333;
+}
+
+.book-button.booked {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.book-button.booking {
+  opacity: 0.8;
+  cursor: not-allowed;
+  animation: pulse 1.5s infinite;
+}
+
+.book-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.message {
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.message.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.message.success-animated {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Comment Section Styles */
+.comments-section {
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-top: 20px;
+  max-height: none;
+  overflow: visible;
+}
+
+.comments-section h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.comment-form {
+  margin-bottom: 30px;
+}
+
+.comment-input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 100px;
+  margin-bottom: 15px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: #0ca789;
+  box-shadow: 0 0 0 2px rgba(12, 167, 137, 0.1);
+}
+
+.post-comment-btn {
+  background-color: #0ca789;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-comment-btn:hover {
+  background-color: #098f74;
+  transform: translateY(-2px);
+}
+
+.post-comment-btn:active {
+  transform: translateY(0);
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 800px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  border-left: 3px solid #0ca789;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.comment-content {
+  flex: 1;
+  text-align: left;
+  width: 100%;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+}
+
+.comment-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.comment-text {
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+}
+
+.comment-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.comment-action:hover {
+  color: #0ca789;
+  background-color: rgba(12, 167, 137, 0.1);
+}
+
+.comment-action.liked {
+  color: #e53935;
+}
+
+.comment-action i {
+  font-size: 1.1rem;
+}
+
+.replies-container {
+  margin-left: 55px;
+  margin-top: 15px;
+  border-left: 2px solid #e0e0e0;
+  padding-left: 15px;
+}
+
+.reply-form {
+  margin-top: 10px;
+  margin-left: 55px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.reply-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 10px;
+}
+
+.reply-input:focus {
+  outline: none;
+  border-color: #0ca789;
+  box-shadow: 0 0 0 2px rgba(12, 167, 137, 0.1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.like-animation {
+  animation: likeEffect 0.4s ease-out;
+}
+
+@keyframes likeEffect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Add Font Awesome icons */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'); 
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'); 

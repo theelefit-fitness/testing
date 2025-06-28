@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); /* Fallback font similar to Aktiv Grotesk */
+
+:root {
+  --primary-color: #4E3580; /* Purple */
+  --secondary-color: #C8DA2B; /* Lime green */
+  --text-color: #4D4D4D; /* Dark gray */
+  --light-bg: #f9f9f9;
+  --border-light: #e0e0e0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --transition-fast: 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark theme support */
+body.dark-theme {
+  background-color: #121212;
+  color: #f5f5f5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700; /* XBOLD equivalent */
+  color: var(--primary-color);
+}
+
+p, li, span, div {
+  font-weight: 400; /* Regular */
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+button {
+  font-family: 'Inter', 'Aktiv Grotesk Ex', sans-serif;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Common utility classes */
+.button-primary {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.button-primary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Additional global styles */
+html {
+  scroll-behavior: smooth;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Remove default list styles */
+ul, ol {
+  list-style-type: none;
+}
+
+/* Fix button appearance */
+button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+
+/* Set base font size */
+html {
+  font-size: 16px;
+}
+
+/* Custom tooltip styles for charts */
+.custom-tooltip {
+  background-color: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #eee;
+}
+
+.custom-tooltip.dark {
+  background-color: #333;
+  color: #f5f5f5;
+  border: 1px solid #444;
+}
+
+.custom-tooltip .label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}

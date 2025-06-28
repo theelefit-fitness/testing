@@ -1,0 +1,61 @@
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  height: 24px; /* Fixed height for consistency */
+}
+
+.rating-stars.interactive {
+  cursor: pointer;
+}
+
+.rating-stars.interactive:hover {
+  transform: scale(1.05);
+}
+
+.star {
+  color: #ddd;
+  font-size: 1.3rem; /* Slightly smaller for better proportions */
+  cursor: pointer;
+  transition: transform 0.3s ease, color 0.3s ease;
+  margin-right: 3px; /* Slightly more spacing between stars */
+  position: relative;
+  line-height: 1; /* Ensure proper vertical alignment */
+  display: inline-flex; /* Better alignment */
+  align-items: center;
+  justify-content: center;
+  width: 20px; /* Fixed width for better alignment */
+  height: 20px; /* Fixed height for better alignment */
+}
+
+.star.filled {
+  color: #ffc107;
+  text-shadow: 0 0 2px rgba(255, 193, 7, 0.5); /* Add subtle glow effect */
+}
+
+.star.readonly {
+  cursor: default;
+}
+
+.star:hover:not(.readonly) {
+  transform: scale(1.3);
+  color: #ffc107;
+}
+
+/* Add animation for stars when they get filled */
+@keyframes starPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.star.filled:not(.readonly) {
+  animation: starPulse 0.5s ease;
+}
+
+/* Add responsive adjustments */
+@media (max-width: 768px) {
+  .star {
+    font-size: 1.2rem;
+    margin-right: 2px;
+  }
+} 

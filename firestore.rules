@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read their own profile and update specific fields
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow other users to read public profile information
+      // and update followers/following arrays
+      allow update: if request.auth != null && 
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['followers', 'following']));
+    }
+    
+    // Allow authenticated users to read all experts
+    match /experts/{expertId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && 
+                             request.auth.uid == expertId;
+    }
+    
+    // Allow authenticated users to read and create appointments
+    match /appointments/{appointmentId} {
+      allow read: if request.auth != null && 
+                   (resource.data.userId == request.auth.uid || 
+                    resource.data.expertId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+                            (resource.data.userId == request.auth.uid || 
+                             resource.data.expertId == request.auth.uid);
+    }
+    
+    // Allow authenticated users to read and create reviews
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+                     request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                            resource.data.userId == request.auth.uid;
+    }
+    
+    // Allow authenticated users to read and create applications
+    match /applications/{applicationId} {
+      allow read: if request.auth != null && 
+                   resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && 
+                     request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Community posts rules
+    match /posts/{postId} {
+      // Anyone can read posts
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can create posts
+      allow create: if request.auth != null && 
+                     request.resource.data.userId == request.auth.uid;
+      
+      // Users can only update their own posts
+      // But anyone can update likes and comments arrays
+      allow update: if request.auth != null && 
+                     (resource.data.userId == request.auth.uid || 
+                      request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['likes', 'comments']));
+      
+      // Only post owners can delete posts
+      allow delete: if request.auth != null && 
+                     resource.data.userId == request.auth.uid;
+    }
+  }
+} 

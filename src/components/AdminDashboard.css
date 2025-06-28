@@ -1,0 +1,240 @@
+/* AdminDashboard.css */
+
+.dashboard-section {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .dashboard-section {
+  background-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.dark-theme .section-header h3 {
+  color: #fff;
+}
+
+.view-all-button {
+  background-color: #4E3580;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.view-all-button:hover {
+  background-color: #3c2966;
+}
+
+.dark-theme .view-all-button {
+  background-color: #C8DA2B;
+  color: #333;
+}
+
+.dark-theme .view-all-button:hover {
+  background-color: #a8b824;
+}
+
+.no-data-message {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 15px 0;
+}
+
+.dark-theme .no-data-message {
+  color: #aaa;
+}
+
+.applications-preview {
+  margin-top: 10px;
+}
+
+.application-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.application-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.application-item:last-child {
+  border-bottom: none;
+}
+
+.application-item:hover {
+  background-color: #f8f8f8;
+}
+
+.dark-theme .application-item {
+  border-bottom: 1px solid #444;
+}
+
+.dark-theme .application-item:last-child {
+  border-bottom: none;
+}
+
+.dark-theme .application-item:hover {
+  background-color: #444;
+}
+
+.app-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.dark-theme .app-name {
+  color: #fff;
+}
+
+.app-specialty {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.dark-theme .app-specialty {
+  color: #bbb;
+}
+
+.app-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.dark-theme .app-date {
+  color: #999;
+}
+
+.review-button {
+  background-color: #4E3580;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.review-button:hover {
+  background-color: #3c2966;
+  transform: translateY(-1px);
+}
+
+.dark-theme .review-button {
+  background-color: #C8DA2B;
+  color: #333;
+}
+
+.dark-theme .review-button:hover {
+  background-color: #a8b824;
+}
+
+.more-applications {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+.dark-theme .more-applications {
+  color: #aaa;
+}
+
+/* Action Required Section */
+.action-required {
+  background-color: #fff8e6;
+  border-left: 4px solid #ffc107;
+}
+
+.dark-theme .action-required {
+  background-color: #3a3000;
+  border-left: 4px solid #ffc107;
+}
+
+.action-required-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.action-required-message {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #333;
+}
+
+.dark-theme .action-required-message {
+  color: #f0f0f0;
+}
+
+.action-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.action-required-button {
+  background-color: #ffc107;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-required-button:hover {
+  background-color: #e0a800;
+  transform: translateY(-2px);
+}
+
+/* Pending Applications Section */
+
+.chart-description {
+  font-size: 14px;
+  color: #666;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
+.dark-theme .chart-description {
+  color: #aaa;
+} 
