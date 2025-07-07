@@ -116,7 +116,7 @@ const AIFitnessCoach = () => {
   const getApiUrl = () => {
     // Use env variable if available, otherwise fallback to these options
     if (process.env.NODE_ENV === 'development') {
-      return 'http://127.0.0.1:5000/chat'; // Local development
+      return 'http://127.0.0.1:10000/chat'; // Local development
     }  else {
       // In production, use the EleFit API endpoint 
       return 'https://testing-aolf.onrender.com/chat';
@@ -1239,13 +1239,30 @@ Remember: ALWAYS respond in English regardless of the input language.`;
       
       // First, check if this query is in the cache
       try {
+        // Build userProfile object from formData
+        const userProfile = {
+          age: formData.age,
+          gender: formData.gender,
+          height_cm: formData.height,
+          weight_kg: formData.currentWeight,
+          target_weight_kg: formData.targetWeight,
+          activity_level: formData.activityLevel,
+          experience_level: formData.experienceLevel,
+          workout_days: formData.workoutDays,
+          timeframe_months: formData.timeframe,
+          health_conditions: formData.healthConditions,
+          // Add more fields if needed
+        };
+
         const cacheCheckResponse = await fetch(getApiUrl().replace('/chat', '/check-cache'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            prompt: enhancedUserPrompt
+            prompt: enhancedUserPrompt,
+            userProfile: userProfile,
+            forceNew: false
           })
         });
         
