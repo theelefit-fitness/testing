@@ -11,7 +11,7 @@ import uuid
 from utils import calculate_bmi, calculate_tdee, goal_config, user_profile_default
 
 # Load environment variables
-load_dotenv()
+# load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -19,7 +19,7 @@ app = Flask(__name__)
 # Enable CORS for development
 CORS(app, origins="*")  # Allow all origins for development
 
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = "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"
 if not api_key:
     raise ValueError("OPENAI_API_KEY not set in .env file")
 openai.api_key = api_key
@@ -62,52 +62,48 @@ def chat_with_gpt():
 
         data = request.get_json()
         prompt = data.get('prompt', '')
-        incoming_profile = data.get('userProfile', {})
+        user_details = data.get('userDetails', {})
  
-
         print("Received prompt:", prompt)
-        print("Received user profile:", incoming_profile)
+        print("Received user details:", user_details)
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
         
-        user_profile = {**user_profile_default, **incoming_profile}
-
-        # Use consistent keys (fallback to both possible keys)
-        weight = user_profile.get("weight_kg") or user_profile.get("weight")
-        height = user_profile.get("height_cm") or user_profile.get("height")
-        age = user_profile.get("age")
-        gender = user_profile.get("gender")
-        diet = user_profile.get("diet", "vegetarian")
-        allergies = user_profile.get("allergies", [])
-        goal = user_profile.get("goal", "fat loss")
-        activity_level = user_profile.get("activity_level") or user_profile.get("activityLevel", "moderate")
-        location = user_profile.get("location", "")
-        preferences = user_profile.get("preferences", [])
-
-        bmi = calculate_bmi(weight, height)
-        tdee = calculate_tdee(weight, height, age, gender, activity_level)
-        goal_plan = goal_config.get(goal, goal_config["get_fit"])
-        target_calories = tdee + goal_plan["calorie_offset"]
-        workout_focus = goal_plan["workout_focus"]
-        target_split = {
-        "breakfast": 0.25 * target_calories,  # 450
-        "lunch": 0.35 * target_calories,      # 630
-        "snack": 0.10 * target_calories,      # 180
-        "dinner": 0.30 * target_calories      # 540
+        # Map received user details to expected format
+        user_profile = {
+            "age": user_details.get("dateOfBirth", ""),  # We'll need to calculate age from DOB
+            "weight_kg": user_details.get("weight", ""),
+            "height_cm": user_details.get("height", ""),
+            "gender": "",  # Not provided in current user details
+            "diet": "",    # Not provided in current user details
+            "allergies": [user_details.get("allergies", "")],
+            "goal": user_details.get("healthGoals", ""),
+            "activity_level": "moderate",  # Default value
+            "location": "",  # Not provided in current user details
+            "preferences": [user_details.get("dietaryRestrictions", "")]
         }
+
+        # Calculate BMI and TDEE
+        weight = float(user_profile["weight_kg"]) if user_profile["weight_kg"] else 70
+        height = float(user_profile["height_cm"]) if user_profile["height_cm"] else 170
+        
+        bmi = calculate_bmi(weight, height)
+        tdee = calculate_tdee(weight, height, 30, "unknown", user_profile["activity_level"])  # Using default age and gender
+        goal_plan = goal_config.get(user_profile["goal"], goal_config["get_fit"])
+        target_calories = round(tdee + goal_plan["calorie_offset"])
+        calorie_lower = target_calories - 150
+        calorie_upper = target_calories + 150
+        workout_focus = goal_plan["workout_focus"]
 
         user_context = f"""
 USER PROFILE:
-- Age: {age}
 - Weight: {weight} kg
 - Height: {height} cm
 - BMI: {bmi}
-- Gender: {gender}
-- Activity Level: {activity_level}
-- Goal: {goal}
-- Location: {location}
-- Dietary Preferences: {", ".join(preferences)}
-- Allergies: {", ".join(allergies)}
+- Activity Level: {user_profile["activity_level"]}
+- Goal: {user_profile["goal"]}
+- Dietary Restrictions: {user_profile["preferences"][0]}
+- Allergies: {user_profile["allergies"][0]}
 - TDEE: {tdee} kcal/day
 - Target Calories for Goal: {target_calories} kcal/day
 - Primary Workout Focus: {workout_focus}
@@ -120,31 +116,35 @@ USER PROFILE:
         # Actual prompt sent to AI includes the unique identifier
         unique_prompt = f"{prompt}\n\nRequest-ID: {unique_id}-{timestamp}"
 
-        print(f"Making API call to OpenAI with prompt: '{user_context[:50]}...'")
+        print(f"Making API call to OpenAI with prompt: '{user_context}...'")
         # Call OpenAI
         client = openai.OpenAI(api_key=api_key)
         print("Target calories for goal:", target_calories)
         response = client.chat.completions.create(
-            model="gpt-4.1",
+            model="gpt-4-turbo",  
+            temperature=0.3,
+            top_p=0.9,
+            stop=["Request-ID:"],
             messages = [
                 {
                     "role": "system",
                     "content": f"""
-You are generating a 7-day personalized fitness and nutrition plan based on the user's profile.
+You are a health assistant generating personalized fitness and nutrition plans.
 
-Your output must include two clearly separated sections:
-1. MEAL_PLAN
-2. WORKOUT_PLAN
-
-GENERAL INSTRUCTIONS:
-- Follow all constraints and structure strictly.
-- Match the user’s: target_calories, fitness goal, fitness level, dietary preferences, allergies, cultural background.
-- Use concise, normalized English only.
-- Do not add comments, reasoning, or extra text.
-- Both MEAL_PLAN and WORKOUT_PLAN must have exactly 7 days.
-- Calories do not have to match the target exactly but must stay within ±100 kcal of {target_calories}.
+STRICT OUTPUT RULES:
+- Output MUST contain exactly 7 full days of both MEAL_PLAN and WORKOUT_PLAN.
+- Do NOT add any reasoning, explanations, or extra text.
+- For each MEAL_PLAN day:
+  • Include exactly 3 meals (Breakfast, Lunch, Dinner)
+  • Include exactly 1 Snack
+  • Each meal/snack must have 3 items with grams and calories
+  • Daily calorie total must be within ±100 kcal of {target_calories}
+- For each WORKOUT_PLAN day:
+  • Include 4 exercises with sets x reps
 
 MEAL_PLAN FORMAT:
+Include exactly 7 days — Day 1 to Day 7.
+
 Each day must include:
 - 3 meals (Breakfast, Lunch, Dinner)
 - 1 Snack
@@ -177,9 +177,9 @@ Day X:
 
 Total Daily Calories: XXX kcal
 
-WORKOUT_PLAN FORMAT:
 
 WORKOUT_PLAN:
+Include exactly 7 days — Day 1 to Day 7.
 Timeline: [X months]
 Weekly Schedule: [Y days/week]
 Expected Results: [Short result statement based on user's goal]
@@ -192,40 +192,12 @@ Day X – [Focus Area]:
 3. [Exercise 3 — sets x reps]
 4. [Exercise 4 — sets x reps]
 
-CUSTOMIZATION RULES:
-
-1. Cultural Food Matching:
-   - If the user specifies a cultural identity (e.g., Indian), use familiar, culturally authentic foods and ingredients.
-
-2. Dietary Restrictions:
-   - Respect all preferences (e.g., vegetarian, vegan, halal, gluten-free).
-   - Avoid all listed allergens strictly.
-
-3. Physical Attributes:
-   - Customize calorie needs and exercise difficulty based on:
-     - Age
-     - Weight
-     - Height
-     - BMI
-     - Gender
-
-4. Health Conditions:
-   - Apply modifications for any relevant conditions (e.g., diabetic-friendly meals, low-sodium for hypertension).
-
-5. Fitness Level:
-   - Match workout intensity to fitness level:
-     - Beginner: low-impact, controlled movements
-     - Intermediate: moderate intensity, added resistance
-     - Advanced: high intensity, strength and endurance
-
-6. Calorie Matching:
-   - Keep total daily calories within ±100 kcal of {target_calories}.
-   - Show total per day at the bottom of each MEAL_PLAN.
-
-INPUT FORMAT:
-User context will be provided as:
-
-{user_context}
+ADDITIONAL CUSTOMIZATION GUIDELINES:
+- Match cultural preferences when possible (e.g., Indian food)
+- Respect all dietary restrictions and avoid allergens
+- Adjust meal calories and workout difficulty using age, BMI, and activity level
+- Vary total daily calories between {calorie_lower} and {calorie_upper}.
+- Each day’s total should look natural and not identical to others and accurate to the meals mentioned
 """
                 },
                 {
@@ -234,6 +206,7 @@ User context will be provided as:
                 }
             ]
         )
+        print("Total tokens used:", response.usage.total_tokens)
 
         # Defensive: ensure reply is always a string
         reply = response.choices[0].message.content
@@ -247,7 +220,7 @@ User context will be provided as:
         return jsonify({"reply": reply, "cached": False}), 200
 
     except Exception as e:
-        print("Exception in /chat:", e)
+        print(f"Error in chat endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # @app.route('/check-cache', methods=['OPTIONS', 'POST'])
@@ -333,4 +306,4 @@ User context will be provided as:
 #         return jsonify({"error": str(e)}), 500
 # Run locally
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='127.0.0.1', port=5000, debug=True)

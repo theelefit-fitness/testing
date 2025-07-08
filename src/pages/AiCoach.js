@@ -2,7 +2,8 @@ import "./AiCoach.css";
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ref, push, serverTimestamp } from 'firebase/database';
-import { database } from '../services/firebase';    
+import { doc, getDoc } from 'firebase/firestore';
+import { database, db, auth } from '../services/firebase';    
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
 const AIFitnessCoach = () => {
@@ -34,6 +35,8 @@ const AIFitnessCoach = () => {
     timeframe: '3',
     healthConditions: []
   });
+  // Add new state for warning message
+  const [warningMessage, setWarningMessage] = useState('');
 
   // Refs
   const loadingAnimationRef = useRef(null);
@@ -116,12 +119,10 @@ const AIFitnessCoach = () => {
   const getApiUrl = () => {
     // Use env variable if available, otherwise fallback to these options
     if (process.env.NODE_ENV === 'development') {
-      return 'http://127.0.0.1:10000/chat'; // Local development
-    }  else {
+      return 'http://127.0.0.1:5000/chat'; // Local development
+    } else {
       // In production, use the EleFit API endpoint 
-      return 'https://testing-aolf.onrender.com/chat';
-      // If you're hosting the backend on the same domain, use a relative URL:
-      // return '/apps/coach-api/chat';
+      return 'https://yantraprise.com/chat';
     }
   };
 
@@ -351,195 +352,48 @@ const AIFitnessCoach = () => {
   const handleRecommendation = async () => {
     if (!fitnessGoal.trim()) {
       setInputError(true);
-      setTimeout(() => setInputError(false), 3000); // Clear error after 3 seconds
       return;
     }
     
-    if (isLoading) return;
-    
     setInputError(false);
+    setWarningMessage(''); // Clear any previous warning
     setIsLoading(true);
     setShowPlans(false);
-    setLastProcessedGoal(fitnessGoal);
-    
-    // Close any open goal form when recommendation button is clicked
-    setCurrentPopupGoal(null);
-
-    // Store the submission in Firebase
-    storeSubmissionInFirebase(fitnessGoal);
 
     try {
-      // Extract requested days from the prompt if specified
-      // Improved regex to catch all formats mentioning days
-      let requestedDays = 7; // Default to 7 days
-      
-      // Try multiple patterns to catch different ways of specifying days
-      const dayPatterns = [
-        /(\d+)[ -]day/i,                    // "4-day" or "4 day"
-        /(\d+)[ -]days/i,                  // "4-days" or "4 days"
-        /for[ -](\d+)[ -]days/i,           // "for 4 days"
-        /(\d+)[ -]days[ -](?:a[ -])?week/i, // "4 days a week" or "4 days week"
-        /(\d+)[ -]times[ -](?:a[ -])?week/i // "4 times a week"
-      ];
-      
-      for (const pattern of dayPatterns) {
-        const match = fitnessGoal.match(pattern);
-        if (match) {
-          requestedDays = parseInt(match[1]);
-          console.log(`User requested ${requestedDays} days - matched pattern: ${pattern}`);
-          break;
-        }
+      // Get user details from Firebase
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+
+      // Check if user details are missing for normal users and show warning
+      if (userData?.userType !== 'expert' && 
+          (!userData?.height || !userData?.weight || !userData?.dateOfBirth || 
+           !userData?.healthGoals || !userData?.dietaryRestrictions || !userData?.allergies)) {
+        setWarningMessage('⚠️ For better personalized results, please complete your health information in your dashboard.');
       }
 
-      // Always ensure reasonable bounds
-      requestedDays = Math.min(Math.max(requestedDays, 1), 14);
-      console.log(`Final requested days count: ${requestedDays}`);
-      
-      // Check if this is a workout-focused request
-      const isWorkoutFocused = /workout|exercise|training|routine|gym/i.test(fitnessGoal);
-      console.log(`Is workout-focused request: ${isWorkoutFocused}`);
-      
-      // Look for cultural/dietary preferences in the input
-      const culturalTerms = [
-        'indian', 'chinese', 'mexican', 'italian', 'mediterranean', 
-        'japanese', 'thai', 'korean', 'french', 'american', 'greek',
-        'vegan', 'vegetarian', 'keto', 'halal', 'kosher', 'gluten-free', 
-        'pescatarian', 'paleo'
-      ];
-      
-      let detectedCulturalPreferences = [];
-      culturalTerms.forEach(term => {
-        if (fitnessGoal.toLowerCase().includes(term)) {
-          detectedCulturalPreferences.push(term);
-        }
-      });
-      
-      if (detectedCulturalPreferences.length > 0) {
-        console.log(`Detected cultural/dietary preferences: ${detectedCulturalPreferences.join(', ')}`);
-      }
-      
-      // Look for physical attributes in input (age, weight, height)
-      const ageMatch = fitnessGoal.match(/(\d+)\s*(?:years|yrs|yr|y)(?:\s*old)?/i);
-      const weightMatch = fitnessGoal.match(/(\d+(?:\.\d+)?)\s*(?:kg|kgs|pounds|lbs)/i);
-      const heightMatch = fitnessGoal.match(/(\d+(?:\.\d+)?)\s*(?:cm|centimeters|meters|m|feet|ft|foot|inches|inch|in)/i);
-      
-      let physicalAttributes = {};
-      if (ageMatch) physicalAttributes.age = ageMatch[1];
-      if (weightMatch) physicalAttributes.weight = weightMatch[1];
-      if (heightMatch) physicalAttributes.height = heightMatch[1];
-      
-      if (Object.keys(physicalAttributes).length > 0) {
-        console.log(`Detected physical attributes:`, physicalAttributes);
-      }
+      // Always prepare user details, using empty strings for missing values
+      const userDetails = {
+        height: userData?.height || "",
+        weight: userData?.weight || "",
+        dateOfBirth: userData?.dateOfBirth || "",
+        healthGoals: userData?.healthGoals || "",
+        dietaryRestrictions: userData?.dietaryRestrictions || "",
+        allergies: userData?.allergies || ""
+      };
 
-      // Enhanced user prompt with the appropriate number of days and detected preferences
-      // Make the day count extremely explicit with redundant phrasing
-      let enhancedUserPrompt;
-      
-      if (isWorkoutFocused) {
-        // For workout-focused requests, emphasize the workout plan and day count even more
-        enhancedUserPrompt = `${fitnessGoal} IMPORTANT: Please provide EXACTLY ${requestedDays} days of workout plan - no more, no less. Also include a corresponding ${requestedDays}-day meal plan to support these workouts. Each day must include Breakfast, Lunch, Snack, and Dinner with exactly 3 items per meal type, and 4 exercises per workout day.`;
-      } else {
-        // Standard format for other requests
-        enhancedUserPrompt = `${fitnessGoal} Please provide EXACTLY ${requestedDays} days of meal plan and EXACTLY ${requestedDays} days of workout plan. I need ${requestedDays} days total, not more. Each day must include Breakfast, Lunch, Snack, and Dinner with exactly 3 items per meal type, and 4 exercises per workout day.`;
-      }
-      
-      const systemPrompt = `You are a fitness assistant. ALWAYS respond in English regardless of the input language.
-
-IMPORTANT FORMATTING RULES:
-1. All responses MUST be in English, even if the user's prompt is in another language.
-2. Default time period is 3 months unless specified otherwise.
-3. Default workout days is 7 days per week unless specified otherwise.
-4. NEVER exceed the number of days requested by the user.
-5. EXACTLY 3 items per meal type (no more, no less).
-6. EXACTLY 4 exercises per workout day (no more, no less).
-
-MEAL_PLAN FORMAT:
-For each day (Day 1 to 7):
-Day X:
-- Breakfast (XXX calories):
-  1. [Meal item 1]
-  2. [Meal item 2]
-  3. [Meal item 3]
-- Lunch (XXX calories):
-  1. [Meal item 1]
-  2. [Meal item 2]
-  3. [Meal item 3]
-- Snack (XXX calories):
-  1. [Snack item 1]
-  2. [Snack item 2]
-  3. [Snack item 3]
-- Dinner (XXX calories):
-  1. [Meal item 1]
-  2. [Meal item 2]
-  3. [Meal item 3]
-
-Total Daily Calories: XXXX
-
-WORKOUT_PLAN FORMAT:
-Timeline: X months
-Weekly Schedule: 7 days per week
-Expected Results: [Describe expected results after following this plan for the specified months]
-
-For each day (Day 1 to 7):
-Day X - [Focus Area]:
-1. [Exercise 1 with sets/reps]
-2. [Exercise 2 with sets/reps]
-3. [Exercise 3 with sets/reps]
-4. [Exercise 4 with sets/reps]
-
-Notes:
-- Each meal MUST include calorie count
-- Each meal type MUST have EXACTLY 3 items
-- Each day MUST have a total calorie count
-- Each workout day MUST have EXACTLY 4 exercises
-- Workouts MUST be appropriate for the specified fitness level
-- Include expected results after following the plan for specified months
-- Adjust intensity based on experience level
-- Consider any health conditions in recommendations
-
-Remember: ALWAYS respond in English regardless of the input language.`;
-
-      // First, check if this query is in the cache
-      try {
-        const cacheCheckResponse = await fetch(getApiUrl().replace('/chat', '/check-cache'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            prompt: enhancedUserPrompt
-          })
-        });
-        
-        if (cacheCheckResponse.ok) {
-          const cacheData = await cacheCheckResponse.json();
-          console.log('Cache check response:', cacheData);
-          
-          // If we have a cached response, use it
-          if (cacheData.cached && cacheData.reply) {
-            console.log('Using cached response');
-            parseResponse(cacheData.reply);
-            setShowPlans(true);
-            setIsLoading(false);
-            return;
-          }
-        }
-      } catch (error) {
-        console.warn('Cache check failed:', error);
-        // Continue with normal request if cache check fails
-      }
-
-      // If no cache hit, proceed with normal request
       const response = await fetch(getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
         body: JSON.stringify({ 
-          prompt: enhancedUserPrompt,
-          forceNew: false
-        })
+          prompt: fitnessGoal,
+          userDetails: userDetails
+        }),
       });
 
       if (!response.ok) {
@@ -1239,30 +1093,13 @@ Remember: ALWAYS respond in English regardless of the input language.`;
       
       // First, check if this query is in the cache
       try {
-        // Build userProfile object from formData
-        const userProfile = {
-          age: formData.age,
-          gender: formData.gender,
-          height_cm: formData.height,
-          weight_kg: formData.currentWeight,
-          target_weight_kg: formData.targetWeight,
-          activity_level: formData.activityLevel,
-          experience_level: formData.experienceLevel,
-          workout_days: formData.workoutDays,
-          timeframe_months: formData.timeframe,
-          health_conditions: formData.healthConditions,
-          // Add more fields if needed
-        };
-
         const cacheCheckResponse = await fetch(getApiUrl().replace('/chat', '/check-cache'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            prompt: enhancedUserPrompt,
-            userProfile: userProfile,
-            forceNew: false
+            prompt: enhancedUserPrompt
           })
         });
         

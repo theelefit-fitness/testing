@@ -481,7 +481,7 @@ Fix background decorative elements
   
   .accordion-arrow {
     position: absolute;
-    right: 16px;
+    right: 1px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 20px;
@@ -984,8 +984,8 @@ Fix background decorative elements
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 50px;
+    height: 34px;
     flex-shrink: 0;
   }
   
@@ -1389,10 +1389,11 @@ Fix background decorative elements
     
     .day-header-right {
       margin-top: 0;
+
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 12px;
+      gap: 15px;
     }
     
     /* Improve nested accordion headers for meal types */
@@ -2179,7 +2180,7 @@ Fix background decorative elements
     font-size: 15.2px;
     font-weight: 500;
     padding: 6px 14px;
-    
+    margin-right: 30px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
