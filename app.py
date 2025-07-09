@@ -97,8 +97,9 @@ def chat_with_gpt():
         calorie_lower = target_calories - 150
         calorie_upper = target_calories + 150
         workout_focus = goal_plan["workout_focus"]
-        user_profile["age"] = get_user_age_from_dob(user_details.get("dateOfBirth", ""))
-        age = get_user_age_from_dob(user_profile["age"])
+        print(user_details.get("dateOfBirth", ""))
+        age = get_user_age_from_dob(user_details.get("dateOfBirth", ""))
+        user_profile["age"] = age
         user_context = f"""
 USER PROFILE:
 - Weight: {weight} kg
