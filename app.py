@@ -24,10 +24,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
-# print("OpenAI API Key loaded successfully",api_key)
-# api_key = "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"
-# Set your OpenAI API key
-
 # Initialize Redis client (make sure Redis is running locally)
 # redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
 

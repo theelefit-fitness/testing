@@ -122,7 +122,7 @@ const AIFitnessCoach = () => {
       return 'http://127.0.0.1:5000/chat'; // Local development
     } else {
       // In production, use the EleFit API endpoint 
-      return 'https://yantraprise.com/chat';
+      return 'https://testing-aolf.onrender.com/chat';
     }
   };
 
