@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import openai
+from  openai import OpenAI
 import redis
 import json
 from langdetect import detect
@@ -8,7 +8,8 @@ import os
 from dotenv import load_dotenv
 import time
 import uuid
-from utils import calculate_bmi, calculate_tdee, goal_config, user_profile_default
+import re
+from utils import calculate_bmi, calculate_tdee, goal_config, classify_goal_from_text, get_user_age_from_dob
 
 # Load environment variables
 # load_dotenv()
@@ -19,11 +20,12 @@ app = Flask(__name__)
 # Enable CORS for development
 CORS(app, origins="*")  # Allow all origins for development
 
-api_key = "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"
-if not api_key:
-    raise ValueError("OPENAI_API_KEY not set in .env file")
-openai.api_key = api_key
-
+import os
+from dotenv import load_dotenv
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+# print("OpenAI API Key loaded successfully",api_key)
+# api_key = "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"
 # Set your OpenAI API key
 
 # Initialize Redis client (make sure Redis is running locally)
@@ -74,7 +76,7 @@ def chat_with_gpt():
             "age": user_details.get("dateOfBirth", ""),  # We'll need to calculate age from DOB
             "weight_kg": user_details.get("weight", ""),
             "height_cm": user_details.get("height", ""),
-            "gender": "",  # Not provided in current user details
+            "gender":  user_details.get("age",""), # Not provided in current user details
             "diet": "",    # Not provided in current user details
             "allergies": [user_details.get("allergies", "")],
             "goal": user_details.get("healthGoals", ""),
@@ -88,18 +90,21 @@ def chat_with_gpt():
         height = float(user_profile["height_cm"]) if user_profile["height_cm"] else 170
         
         bmi = calculate_bmi(weight, height)
-        tdee = calculate_tdee(weight, height, 30, "unknown", user_profile["activity_level"])  # Using default age and gender
-        goal_plan = goal_config.get(user_profile["goal"], goal_config["get_fit"])
+        tdee = calculate_tdee(weight, height, 30, "unknown", user_profile["activity_level"]) 
+        goal_category = classify_goal_from_text(user_profile["goal"])
+        goal_plan = goal_config[goal_category]
         target_calories = round(tdee + goal_plan["calorie_offset"])
         calorie_lower = target_calories - 150
         calorie_upper = target_calories + 150
         workout_focus = goal_plan["workout_focus"]
-
+        user_profile["age"] = get_user_age_from_dob(user_details.get("dateOfBirth", ""))
+        age = get_user_age_from_dob(user_profile["age"])
         user_context = f"""
 USER PROFILE:
 - Weight: {weight} kg
 - Height: {height} cm
-- BMI: {bmi}
+- BMI: {bmi} 
+- age : {age}
 - Activity Level: {user_profile["activity_level"]}
 - Goal: {user_profile["goal"]}
 - Dietary Restrictions: {user_profile["preferences"][0]}
@@ -107,6 +112,7 @@ USER PROFILE:
 - TDEE: {tdee} kcal/day
 - Target Calories for Goal: {target_calories} kcal/day
 - Primary Workout Focus: {workout_focus}
+- User Prompt : {prompt}
 """
 
         # Add a unique identifier to the prompt
@@ -118,11 +124,11 @@ USER PROFILE:
 
         print(f"Making API call to OpenAI with prompt: '{user_context}...'")
         # Call OpenAI
-        client = openai.OpenAI(api_key=api_key)
+        client = OpenAI()
         print("Target calories for goal:", target_calories)
         response = client.chat.completions.create(
             model="gpt-4-turbo",  
-            temperature=0.3,
+            temperature=0.6,
             top_p=0.9,
             stop=["Request-ID:"],
             messages = [
