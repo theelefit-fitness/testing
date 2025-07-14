@@ -1,0 +1,243 @@
+.profile-image-uploader {
+  position: relative;
+  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-image-uploader .image-container {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 4px solid white;
+  transition: all 0.3s ease;
+}
+
+/* Remove hover transform effect since we're not using the image for uploads anymore */
+.profile-image-uploader .image-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-image-uploader.small .image-container {
+  width: 80px;
+  height: 80px;
+}
+
+.profile-image-uploader.medium .image-container {
+  width: 140px;
+  height: 140px;
+}
+
+.profile-image-uploader.large .image-container {
+  width: 300px;
+  height: 300px;
+  border: 5px solid white;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.profile-image-uploader img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+/* New Upload Button */
+.profile-image-uploader .upload-photo-btn {
+  margin: 10px;
+  padding: 10px 20px;
+  background-color: #4E3580;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.profile-image-uploader .upload-photo-btn:hover {
+  background-color: #372659;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Remove camera button style since we're not using it anymore */
+.profile-image-uploader .camera-button {
+  display: none;
+}
+
+/* Remove image overlay for hover since we're not using it anymore */
+.profile-image-uploader .image-container::before {
+  display: none;
+}
+
+.profile-image-uploader .image-container:hover::before {
+  opacity: 0;
+}
+
+/* Preview mode styling */
+.profile-image-uploader .image-container.preview-mode::before {
+  display: block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.3;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Upload overlay and spinner */
+.profile-image-uploader .upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 20;
+  
+}
+
+.profile-image-uploader .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(78, 53, 128, 0.3);
+  border-radius: 50%;
+}
+
+.profile-image-uploader .upload-text {
+  color: #4E3580;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-image-uploader .upload-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  background-color: #ffebee;
+  padding: 5px 10px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* Save/Cancel buttons for image upload */
+.profile-image-uploader .upload-actions {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: max-content;
+  z-index: 30;
+}
+
+.profile-image-uploader .upload-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.profile-image-uploader .save-btn {
+  background-color: #4E3580;
+  color: white;
+}
+
+.profile-image-uploader .save-btn:hover {
+  background-color: #372659;
+  transform: translateY(-2px);
+}
+
+.profile-image-uploader .cancel-btn {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.profile-image-uploader .cancel-btn:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .profile-image-uploader.large .image-container {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .profile-image-uploader .upload-photo-btn {
+    padding: 9px 18px;
+    font-size: 14px;
+    margin-top: 18px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-image-uploader.large .image-container {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .profile-image-uploader .upload-photo-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-image-uploader.large .image-container {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .profile-image-uploader .upload-actions {
+    bottom: -45px;
+  }
+  
+  .profile-image-uploader .upload-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .profile-image-uploader .upload-photo-btn {
+    padding: 7px 14px;
+    font-size: 13px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-image-uploader .upload-actions {
+    bottom: -40px;
+  }
+  
+  .profile-image-uploader .upload-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+} 

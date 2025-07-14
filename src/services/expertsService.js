@@ -1,5 +1,5 @@
 import experts from '../data/expertsData';
-import { db } from './firebase';
+import { db, auth, registerUser } from './firebase';
 import { collection, getDocs, doc, getDoc, updateDoc, addDoc, query, where, arrayUnion } from 'firebase/firestore';
 
 // Array of professional headshot images from Unsplash
@@ -151,6 +151,20 @@ export const expertsService = {
       // Choose a random image from the array
       const randomImage = professionalImages[Math.floor(Math.random() * professionalImages.length)];
       
+      // First, register the expert in Shopify and Firebase
+      const additionalData = {
+        firstName: expertData.name.split(' ')[0],
+        lastName: expertData.name.split(' ').slice(1).join(' ')
+      };
+      
+      // Register expert with 'expert' user type
+      const authResult = await registerUser(
+        expertData.email,
+        expertData.password,
+        'expert',
+        additionalData
+      );
+      
       // Create a new expert object with necessary properties
       const newExpert = {
         name: expertData.name,
@@ -169,7 +183,8 @@ export const expertsService = {
           { id: 3, time: "Wednesday 11:00 AM", booked: false },
           { id: 4, time: "Friday 3:00 PM", booked: false }
         ],
-        createdAt: new Date()
+        createdAt: new Date(),
+        shopifyCustomerId: authResult.shopifyCustomerId // Store Shopify customer ID
       };
 
       // Add to Firestore
@@ -184,40 +199,7 @@ export const expertsService = {
       };
     } catch (error) {
       console.error("Error registering expert:", error);
-      
-      // Fallback to local implementation if Firestore fails
-      // Choose a random image from the array
-      const randomImage = professionalImages[Math.floor(Math.random() * professionalImages.length)];
-      
-      // Create a new expert object with necessary properties
-      const newExpert = {
-        id: experts.length + 1,
-        name: expertData.name,
-        specialty: expertData.specialty,
-        experience: expertData.experience,
-        qualifications: expertData.qualifications,
-        bio: expertData.bio,
-        email: expertData.email,
-        phone: expertData.phone,
-        // Use a clear professional image
-        image: randomImage,
-        rating: 4.5, // Default rating for new experts
-        availableSlots: [
-          { id: 1, time: "Monday 9:00 AM", booked: false },
-          { id: 2, time: "Tuesday 2:00 PM", booked: false },
-          { id: 3, time: "Wednesday 11:00 AM", booked: false },
-          { id: 4, time: "Friday 3:00 PM", booked: false }
-        ]
-      };
-
-      // Add the new expert to our experts array
-      experts.push(newExpert);
-      
-      console.log("Expert registered locally:", newExpert);
-      return { 
-        success: true, 
-        message: "Registration successful! You've been added to our experts list." 
-      };
+      throw error;
     }
   },
   
@@ -356,6 +338,56 @@ export const expertsService = {
     } catch (error) {
       console.error("Error getting expert comments:", error);
       return Promise.reject("Failed to retrieve comments");
+    }
+  },
+
+  // Add a like to a comment
+  likeComment: async (expertId, commentId, userId) => {
+    try {
+      const expertDoc = doc(db, 'experts', expertId);
+      const expertSnapshot = await getDoc(expertDoc);
+      
+      if (!expertSnapshot.exists()) {
+        return Promise.reject("Expert not found");
+      }
+      
+      const expertData = expertSnapshot.data();
+      const comments = expertData.comments || [];
+      
+      // Find the comment and update its likes
+      const commentIndex = comments.findIndex(c => c.id === commentId);
+      if (commentIndex === -1) {
+        return Promise.reject("Comment not found");
+      }
+      
+      const comment = comments[commentIndex];
+      const likes = comment.likes || [];
+      const userLiked = likes.includes(userId);
+      
+      if (userLiked) {
+        // Unlike if already liked
+        comment.likes = likes.filter(id => id !== userId);
+        comment.likesCount = (comment.likesCount || 1) - 1;
+      } else {
+        // Add like
+        comment.likes = [...likes, userId];
+        comment.likesCount = (comment.likesCount || 0) + 1;
+      }
+      
+      // Update in Firestore
+      await updateDoc(expertDoc, {
+        comments: comments
+      });
+      
+      return {
+        success: true,
+        liked: !userLiked,
+        likesCount: comment.likesCount,
+        message: `Comment ${userLiked ? 'unliked' : 'liked'} successfully`
+      };
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      return Promise.reject("Failed to like comment");
     }
   }
 };

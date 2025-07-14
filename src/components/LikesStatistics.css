@@ -1,0 +1,133 @@
+.likes-statistics {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.likes-statistics h3 {
+  margin: 0 0 20px 0;
+  color: var(--text-dark);
+  font-size: 1.2rem;
+}
+
+.stats-summary {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.total-likes {
+  text-align: center;
+  padding: 15px 25px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 8px;
+  color: white;
+}
+
+.likes-count {
+  display: block;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.likes-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.top-comments {
+  margin-top: 20px;
+}
+
+.top-comments h4 {
+  margin: 0 0 15px 0;
+  color: var(--text-dark);
+  font-size: 1rem;
+}
+
+.top-comment-item {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: var(--background-light);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: transform 0.2s ease;
+}
+
+.top-comment-item:hover {
+  transform: translateY(-2px);
+}
+
+.comment-rank {
+  width: 25px;
+  height: 25px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.comment-details {
+  flex: 1;
+}
+
+.comment-text {
+  margin: 0 0 8px 0;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.comment-author {
+  color: var(--text-light);
+}
+
+.likes-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #e53935;
+}
+
+.likes-info i {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .likes-statistics {
+    padding: 15px;
+  }
+
+  .total-likes {
+    padding: 12px 20px;
+  }
+
+  .likes-count {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .likes-count {
+    font-size: 1.5rem;
+  }
+
+  .top-comment-item {
+    padding: 12px;
+  }
+} 

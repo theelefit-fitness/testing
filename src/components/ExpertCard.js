@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import RatingStars from './RatingStars';
+import useProfileImage from '../hooks/useProfileImage';
 import './ExpertCard.css';
 
 const ExpertCard = ({ expert }) => {
-  const { id, name, specialty, experience, image, rating } = expert;
+  const { id, name, specialty, experience, profileImageURL, rating } = expert;
   const [isHovered, setIsHovered] = useState(false);
   const commentCount = expert.commentCount || 0;
+  
+  // Use our custom hook to handle the profile image
+  const { imageUrl, isLoading, isDefault } = useProfileImage(id, profileImageURL);
 
   return (
     <div 
@@ -15,7 +19,15 @@ const ExpertCard = ({ expert }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="expert-card-image">
-        <img src={image} alt={name} />
+        {isLoading ? (
+          <div className="image-placeholder">Loading...</div>
+        ) : (
+          <img 
+            src={imageUrl} 
+            alt={name}
+            className={isDefault ? "default-image" : ""}
+          />
+        )}
       </div>
       <div className="expert-card-content">
         <h3 className="expert-name">{name}</h3>

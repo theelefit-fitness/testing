@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ExpertCard from '../components/ExpertCard';
 import expertsService from '../services/expertsService';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './ExpertsPage.css';
 
 const ExpertsPage = () => {
@@ -57,7 +58,7 @@ const ExpertsPage = () => {
       </div>
 
       {loading ? (
-        <div className="loading">Loading experts...</div>
+        <LoadingSpinner text="Loading experts..." />
       ) : error ? (
         <div className="error-message">{error}</div>
       ) : (

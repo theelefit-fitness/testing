@@ -4,7 +4,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  position: fixed;
+  position: fixed;  
   top: 0;
   left: 0;
   right: 0;
@@ -87,6 +87,7 @@
 .nav-item {
   margin: 0 15px;
   opacity: 0;
+ 
   transform: translateY(10px);
   animation: fadeInDown 0.5s forwards;
 }
@@ -136,10 +137,26 @@
   color: #4E3580;
 }
 
+/* Add active link styling */
+.nav-link.active {
+  color: #402C69;
+  font-weight: 600;
+}
+
+.scrolled .nav-link.active {
+  color: #402C69;
+}
+
+.nav-link.active::after {
+  width: 100%;
+  background-color: #402C69;
+}
+
 .nav-button {
   background-color: transparent;
   border: 1px solid white;
-  color: white;
+  color:  #4D4D4D;;
+  background-color:#C8DA2B;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -158,8 +175,9 @@
 }
 
 .nav-button:hover {
-  color: #C8DA2B;
+color: black;
   border-color: #C8DA2B;
+  
 }
 
 .scrolled .nav-button:hover {
@@ -298,5 +316,81 @@
   
   .mobile-menu-toggle {
     display: block;
+  }
+}
+
+/* Navigation Icons Styles */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 0 15px;
+}
+
+.icon-item {
+  margin: 0 !important;
+  position: relative;
+}
+
+.nav-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4D4D4D;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(200, 218, 43, 0.1);
+}
+
+.nav-icon-link:hover {
+  background: rgba(200, 218, 43, 0.2);
+  color: #000;
+  transform: translateY(-2px);
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+}
+
+.icon-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #C8DA2B;
+  color: #4D4D4D;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid white;
+}
+
+/* Mobile Navigation Updates */
+@media screen and (max-width: 768px) {
+  .nav-icons {
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    margin: 15px 0;
+    gap: 30px;
+  }
+
+  .icon-item {
+    margin: 0 !important;
+  }
+
+  .nav-icon-link {
+    padding: 10px;
+  }
+
+  .nav-icon {
+    font-size: 1.75rem;
   }
 } 

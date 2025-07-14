@@ -21,15 +21,21 @@ module.exports = function override(config) {
     "dns": false,
     "dgram": false,
     "buffer": require.resolve("buffer/"),
-    "util": require.resolve("util/"),
-    "process": require.resolve("process/browser")
+    "util": require.resolve("util/")
   });
   config.resolve.fallback = fallback;
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
-      process: 'process/browser',
+      process: require.resolve("process/browser"),
       Buffer: ['buffer', 'Buffer']
     })
   ]);
+  
+  // Resolve Axios Issues
+  config.resolve.alias = {
+    ...config.resolve.alias,
+    'process/browser': require.resolve('process/browser')
+  };
+  
   return config;
 }; 

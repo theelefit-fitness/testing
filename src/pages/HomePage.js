@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth, getUserType } from '../services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import LoadingSpinner from '../components/LoadingSpinner';
+import CommunityPreview from '../components/CommunityPreview';
 import './HomePage.css';
 
 // SVG Icon Components
@@ -49,30 +50,8 @@ const PersonalizedGuidanceIcon = () => (
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          // Get user type and redirect to appropriate dashboard
-          const userType = await getUserType(user.uid);
-          if (userType === 'expert') {
-            navigate('/expert-dashboard');
-          } else {
-            navigate('/user-dashboard');
-          }
-        } catch (error) {
-          console.error("Error redirecting user:", error);
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [navigate, location.pathname]);
+  const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -127,11 +106,17 @@ const HomePage = () => {
         </div>
       </div>
       
-      <div className="cta-section">
-        <div className="cta-content">
+      <div className="container">
+        <CommunityPreview />
+      </div>
+      
+      <div className="expert-section">
+        <div className="expert-section-content">
           <h2>Are You a Nutrition Expert?</h2>
           <p>Join our platform to connect with clients looking for your expertise and grow your practice with TheEleFit.</p>
-          <Link to="/register" className="register-button">Register as Expert</Link>
+          <Link to="/apply-as-expert" className="apply-button">
+            Apply as Expert
+          </Link>
         </div>
       </div>
     </div>

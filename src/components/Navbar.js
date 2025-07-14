@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { auth, getUserType } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { IoNotificationsOutline } from 'react-icons/io5';
+import { BsChatDots } from 'react-icons/bs';
+import { HiOutlineUserGroup } from 'react-icons/hi';
 import './Navbar.css';
+import { db } from '../services/firebase';
+import { getDoc, doc } from 'firebase/firestore';
 
 const Navbar = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -10,6 +15,7 @@ const Navbar = () => {
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isEvaCustomer, setIsEvaCustomer] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,48 +29,44 @@ const Navbar = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        
-        // Get user type
         try {
           const type = await getUserType(user.uid);
           setUserType(type);
+          
+          // Get user data to check if they are an EVA customer
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setIsEvaCustomer(userDoc.data().isEvaCustomer || false);
+          }
         } catch (error) {
-          console.error("Error getting user type:", error);
+          console.error("Error getting user data:", error);
           setUserType(null);
+          setIsEvaCustomer(false);
         }
       } else {
         setCurrentUser(null);
         setUserType(null);
+        setIsEvaCustomer(false);
       }
-      
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [location.pathname]); // Re-run when path changes to ensure nav updates after login/logout
+  }, [location.pathname]);
 
   useEffect(() => {
-    // Close the mobile menu when location changes
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Handle body scroll lock when menu is open
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    document.body.style.overflow = menuOpen ? 'hidden' : 'auto';
     return () => {
       document.body.style.overflow = 'auto';
     };
@@ -82,6 +84,8 @@ const Navbar = () => {
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
+
+  const isCommunityPage = location.pathname === '/community';
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
@@ -106,45 +110,124 @@ const Navbar = () => {
        
         <ul className={`nav-menu ${menuOpen ? 'active' : ''}`}>
           <li className="nav-item">
-            <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>
+            <NavLink 
+              to="/" 
+              className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+              onClick={() => setMenuOpen(false)}
+            >
               Home
-            </Link>
+            </NavLink>
           </li>
           <li className="nav-item">
-            <Link to="/experts" className="nav-link" onClick={() => setMenuOpen(false)}>
-              Find Experts
-            </Link>
+            <NavLink 
+              to="/community" 
+              className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+              onClick={() => setMenuOpen(false)}
+            >
+              Community
+            </NavLink>
           </li>
-          
+          <li className="nav-item">
+            <NavLink 
+              to="/experts" 
+              className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+              onClick={() => setMenuOpen(false)}
+            >
+              Find Expert
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink 
+              to="/apply-as-expert" 
+              className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+              onClick={() => setMenuOpen(false)}
+            >
+              Apply as Expert
+            </NavLink>
+          </li>
+
+          {/* AI Coach visible to all, but redirects based on auth status */}
+          <li className="nav-item">
+            <NavLink
+              to={currentUser ? "/aicoach" : "/auth"}
+              className={({isActive}) => isActive ? "nav-link active" : "nav-link"}
+              onClick={() => setMenuOpen(false)}
+            >
+              AI Coach
+            </NavLink>
+          </li>
+
+          {/* Grocery List - only visible when logged in and is EVA customer */}
+          {currentUser && isEvaCustomer && (
+            <li className="nav-item">
+              <NavLink
+                to="/grocery-list"
+                className={({isActive}) => isActive ? "nav-link active" : "nav-link"}
+                onClick={() => setMenuOpen(false)}
+              >
+                Grocery List
+              </NavLink>
+            </li>
+          )}
+
           {!loading && (
             <>
               {currentUser ? (
                 <>
                   <li className="nav-item">
                     {userType === 'expert' ? (
-                      <Link to="/expert-dashboard" className="nav-link " onClick={() => setMenuOpen(false)}>
+                      <NavLink 
+                        to="/expert-dashboard" 
+                        className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+                        onClick={() => setMenuOpen(false)}
+                      >
                         Dashboard
-                      </Link>
+                      </NavLink>
                     ) : (
-                      <Link to="/user-dashboard" className="nav-link" onClick={() => setMenuOpen(false)}>
+                      <NavLink 
+                        to="/user-dashboard" 
+                        className={({isActive}) => isActive ? "nav-link active" : "nav-link"} 
+                        onClick={() => setMenuOpen(false)}
+                      >
                         My Dashboard
-                      </Link>
+                      </NavLink>
                     )}
                   </li>
-                  <li className="nav-item ">
-                    <button onClick={() => {handleLogout(); setMenuOpen(false);}} className="nav-button nav-link-button">
+
+                  {isCommunityPage && (
+                    <div className="nav-icons">
+                      <li className="nav-item icon-item">
+                        <Link to="/notifications" className="nav-icon-link">
+                          <IoNotificationsOutline className="nav-icon" />
+                          <span className="icon-badge">2</span>
+                        </Link>
+                      </li>
+                      <li className="nav-item icon-item">
+                        <Link to="/chat" className="nav-icon-link">
+                          <BsChatDots className="nav-icon" />
+                          <span className="icon-badge">3</span>
+                        </Link>
+                      </li>
+                      <li className="nav-item icon-item">
+                        <Link to="/connections" className="nav-icon-link">
+                          <HiOutlineUserGroup className="nav-icon" />
+                        </Link>
+                      </li>
+                    </div>
+                  )}
+
+                  <li className="nav-item">
+                    <button onClick={handleLogout} className="nav-button">
                       Logout
                     </button>
                   </li>
                 </>
               ) : (
-                <>
-                  <li className="nav-item">
-                    <Link to="/auth" className="nav-link-button" onClick={() => setMenuOpen(false)}>
-                      Login / Register
-                    </Link>
-                  </li>
-                </>
+                <li className="nav-item">
+                  <Link to="/auth" className="nav-link-button" onClick={() => setMenuOpen(false)}>
+                    Login / Register
+                  </Link>
+                </li>
               )}
             </>
           )}
@@ -154,4 +237,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

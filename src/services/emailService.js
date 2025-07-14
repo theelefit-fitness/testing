@@ -1,6 +1,7 @@
 // Email service for sending notifications
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
 
 // Initialize EmailJS with your User ID (public key)
 // You can find this in your EmailJS dashboard under Account > API Keys
@@ -421,6 +422,272 @@ const formatAppointmentDate = (slotTime) => {
   
   return `${appointmentDate.toLocaleDateString('en-US', options)} at ${timeWithAmPm}`;
 };
+
+// Helper function to generate a random password
+export const generateRandomPassword = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
+
+// In a real application, we would use a service like Firebase Cloud Functions 
+// or a backend server to send emails. For this example, we'll simulate 
+// email sending by storing the email data in Firestore.
+
+export const sendExpertApprovalEmail = async (email, password, name) => {
+  try {
+    console.log(`Sending expert approval email to ${email} with password: ${password}`);
+    
+    // Create HTML email content
+    const emailContent = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #f9f9f9;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #4E3580; margin-bottom: 5px;">Nutrition Experts Platform</h2>
+            <p style="font-size: 18px; font-weight: bold;">Application Approved!</p>
+          </div>
+          
+          <p>Dear ${name},</p>
+          <p>Congratulations! Your application to become a nutrition expert on our platform has been approved.</p>
+          
+          <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border-left: 4px solid #4E3580; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #4E3580; border-bottom: 1px solid #eee; padding-bottom: 10px;">Your Login Credentials</h3>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Password:</strong> ${password}</p>
+            <p><strong>Important:</strong> This password is ready to use. Please use it exactly as shown above.</p>
+            <p><strong>Login URL:</strong> <a href="https://demo-elefit.netlify.app/auth" style="color: #4E3580;">Click here to login</a></p>
+          </div>
+          
+          <p>Please log in and change your password immediately for security purposes.</p>
+          <p>Thank you for joining our platform. We look forward to seeing you help clients achieve their nutrition goals.</p>
+          
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="https://demo-elefit.netlify.app/auth" style="display: inline-block; background-color: #4E3580; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Login Now</a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; color: #666; font-size: 14px;">
+            <p>This is an automated message from the Nutrition Experts Platform.</p>
+            <p>Warm regards,<br>Nutrition Experts Team</p>
+          </div>
+        </div>
+      </body>
+    </html>
+    `;
+
+    // Store the email in Firestore
+    const emailData = {
+      to: email,
+      subject: 'Congratulations! Your Expert Application Has Been Approved',
+      body: emailContent,
+      plainText: `
+Dear ${name},
+
+Congratulations! Your application to become a nutrition expert on our platform has been approved.
+
+You can now log in using the following credentials:
+Email: ${email}
+Password: ${password}
+
+IMPORTANT: This password is ready to use. Please use it exactly as shown above.
+
+Please log in and change your password immediately for security purposes.
+
+Thank you for joining our platform. We look forward to seeing you help clients achieve their nutrition goals.
+
+Best regards,
+The Nutrition Experts Platform Team
+      `,
+      sentAt: new Date(),
+      status: 'pending'
+    };
+    
+    await addDoc(collection(db, 'emails'), emailData);
+    
+    // Also send the email directly using EmailJS
+    try {
+      const SERVICE_ID = "service_6xenpqn";
+      const TEMPLATE_ID = "template_yjlbx4n";
+      
+      const templateParams = {
+        email: email,
+        to_name: name,
+        subject: 'Congratulations! Your Expert Application Has Been Approved',
+        message_html: emailContent,
+        reply_to: "theelifit25@gmail.com",
+      };
+      
+      const response = await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        templateParams,
+        "V8y4JdJdlObvV0JTX"
+      );
+      
+      if (response.status === 200) {
+        console.log(`Email sent successfully to ${email}`);
+      } else {
+        console.warn(`EmailJS response status: ${response.status}`);
+      }
+    } catch (emailError) {
+      console.error('EmailJS Error:', emailError);
+      // If EmailJS fails, we've already stored it in Firestore, so just log the error
+    }
+    
+    console.log(`Approval email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending approval email:", error);
+    throw error;
+  }
+};
+
+export const sendExpertRejectionEmail = async (email, name) => {
+  try {
+    // Store the email in Firestore
+    const emailData = {
+      to: email,
+      subject: 'Update on Your Expert Application',
+      body: `
+Dear ${name},
+
+Thank you for your interest in becoming a nutrition expert on our platform.
+
+After careful review of your application, we regret to inform you that we are unable to approve your application at this time.
+
+Please note that this decision may be based on various factors including current platform needs and specific expertise requirements.
+
+You are welcome to apply again in the future with updated qualifications or experience.
+
+Thank you for your understanding.
+
+Best regards,
+The Nutrition Experts Platform Team
+      `,
+      sentAt: new Date(),
+      status: 'pending'
+    };
+    
+    await addDoc(collection(db, 'emails'), emailData);
+    
+    console.log(`Rejection email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending rejection email:", error);
+    throw error;
+  }
+};
+
+export const sendExpertApprovalEmailWithReset = async (email, name) => {
+  try {
+    console.log(`Sending expert approval email with password reset to ${email}`);
+    
+    // Create HTML email content
+    const emailContent = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #f9f9f9;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #4E3580; margin-bottom: 5px;">Nutrition Experts Platform</h2>
+            <p style="font-size: 18px; font-weight: bold;">Application Approved!</p>
+          </div>
+          
+          <p>Dear ${name},</p>
+          <p>Congratulations! Your application to become a nutrition expert on our platform has been approved.</p>
+          
+          <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; border-left: 4px solid #4E3580; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #4E3580; border-bottom: 1px solid #eee; padding-bottom: 10px;">Account Access</h3>
+            <p>We noticed that you already have an account with us. A password reset email has been sent to your email address.</p>
+            <p><strong>Important:</strong> Please check your inbox and follow the instructions to reset your password.</p>
+            <p><strong>Login URL:</strong> <a href="https://demo-elefit.netlify.app/auth" style="color: #4E3580;">Click here to login</a> after resetting your password.</p>
+          </div>
+          
+          <p>After resetting your password, please log in to access your expert dashboard.</p>
+          <p>Thank you for joining our platform. We look forward to seeing you help clients achieve their nutrition goals.</p>
+          
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="https://demo-elefit.netlify.app/auth" style="display: inline-block; background-color: #4E3580; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Login After Password Reset</a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; color: #666; font-size: 14px;">
+            <p>This is an automated message from the Nutrition Experts Platform.</p>
+            <p>Warm regards,<br>Nutrition Experts Team</p>
+          </div>
+        </div>
+      </body>
+    </html>
+    `;
+
+    // Store the email in Firestore
+    const emailData = {
+      to: email,
+      subject: 'Congratulations! Your Expert Application Has Been Approved',
+      body: emailContent,
+      plainText: `
+Dear ${name},
+
+Congratulations! Your application to become a nutrition expert on our platform has been approved.
+
+We noticed that you already have an account with us. A password reset email has been sent to your email address.
+
+Important: Please check your inbox and follow the instructions to reset your password.
+
+After resetting your password, please log in to access your expert dashboard.
+
+Thank you for joining our platform. We look forward to seeing you help clients achieve their nutrition goals.
+
+Best regards,
+The Nutrition Experts Platform Team
+      `,
+      sentAt: new Date(),
+      status: 'pending'
+    };
+    
+    await addDoc(collection(db, 'emails'), emailData);
+    
+    // Also send the email directly using EmailJS
+    try {
+      const SERVICE_ID = "service_6xenpqn";
+      const TEMPLATE_ID = "template_yjlbx4n";
+      
+      const templateParams = {
+        email: email,
+        to_name: name,
+        subject: 'Congratulations! Your Expert Application Has Been Approved',
+        message_html: emailContent,
+        reply_to: "theelifit25@gmail.com",
+      };
+      
+      const response = await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        templateParams,
+        "V8y4JdJdlObvV0JTX"
+      );
+      
+      if (response.status === 200) {
+        console.log(`Email sent successfully to ${email}`);
+      } else {
+        console.warn(`EmailJS response status: ${response.status}`);
+      }
+    } catch (emailError) {
+      console.error('EmailJS Error:', emailError);
+      // If EmailJS fails, we've already stored it in Firestore, so just log the error
+    }
+    
+    console.log(`Approval email with password reset sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending approval email with password reset:", error);
+    throw error;
+  }
+};
+
+// In a real application, we would use a system like Firebase Cloud Functions
+// to monitor the 'emails' collection and send actual emails.
 
 // Export the service
 const emailService = {

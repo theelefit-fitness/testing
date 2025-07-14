@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { db, auth, getUserType } from '../services/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../services/firebase';
+import { getUserType } from '../services/firebase';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import RatingStars from '../components/RatingStars';
 import bookingService from '../services/bookingService';
 import googleCalendarService from '../services/googleCalendarService';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ProfileImageUploader from '../components/ProfileImageUploader';
+import { getProfileImageURL } from '../services/storageService';
 import './ExpertDashboard.css';
-
-// Default profile image that will be used for all experts
-const DEFAULT_PROFILE_IMAGE = "https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg";
+import LikesStatistics from '../components/LikesStatistics';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const HOURS = [
@@ -55,6 +57,7 @@ const ExpertDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'appointments', 'settings'
   const [message, setMessage] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
 
   useEffect(() => {
     // Check authentication
@@ -72,6 +75,8 @@ const ExpertDashboard = () => {
         
         // Fetch expert data
         fetchExpertData(user.uid);
+        // Fetch profile image
+        fetchProfileImage(user.email);
       } else {
         navigate('/auth');
         setLoading(false);
@@ -123,6 +128,23 @@ const ExpertDashboard = () => {
 
     initializeGoogleCalendar();
   }, []);
+
+  // Refresh profile image if the URL changes
+  useEffect(() => {
+    if (profileImageUrl) {
+      const img = new Image();
+      img.src = profileImageUrl;
+      img.onload = () => {
+        // Image loaded successfully, no need to do anything
+      };
+      img.onerror = () => {
+        // If the image fails to load, try to fetch it again
+        if (currentUser && currentUser.uid) {
+          fetchProfileImage(currentUser.email);
+        }
+      };
+    }
+  }, [profileImageUrl]);
 
   const fetchExpertData = async (userId) => {
     try {
@@ -211,8 +233,6 @@ const ExpertDashboard = () => {
       }
     }));
   };
-
-  
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -391,11 +411,6 @@ const ExpertDashboard = () => {
         text: 'Appointment cancelled successfully',
         type: 'success'
       });
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setMessage(null);
-      }, 3000);
     } catch (error) {
       console.error('Error cancelling booking:', error);
       setError('Failed to cancel booking. Please try again.');
@@ -416,8 +431,59 @@ const ExpertDashboard = () => {
     }
   };
 
+  const fetchProfileImage = async (email) => {
+    try {
+      if (currentUser && currentUser.uid) {
+        // Try to get image from cache first
+        const cachedImageKey = `profileImage_${currentUser.uid}`;
+        const cachedData = localStorage.getItem(cachedImageKey);
+        
+        if (cachedData) {
+          try {
+            const { url, timestamp } = JSON.parse(cachedData);
+            // Check if cache is less than 24 hours old
+            const now = new Date().getTime();
+            if (now - timestamp < 86400000) {
+              console.log('Using cached profile image in ExpertDashboard');
+              setProfileImageUrl(url);
+              return;
+            } else {
+              // Cache expired, remove it
+              localStorage.removeItem(cachedImageKey);
+            }
+          } catch (error) {
+            console.error('Error parsing cached profile image:', error);
+          }
+        }
+        
+        // If not in cache or expired, fetch from storage
+        console.log('Fetching profile image from storage in ExpertDashboard');
+        const imageUrl = await getProfileImageURL(currentUser.uid);
+        if (imageUrl) {
+          setProfileImageUrl(imageUrl);
+          
+          // Save to cache
+          try {
+            localStorage.setItem(cachedImageKey, JSON.stringify({
+              url: imageUrl,
+              timestamp: new Date().getTime()
+            }));
+          } catch (error) {
+            console.error('Error saving profile image to cache:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile image:', error);
+    }
+  };
+
+  const handleProfileImageUploaded = (url) => {
+    setProfileImageUrl(url);
+  };
+
   if (loading) {
-    return <div className="loading">Loading your expert dashboard...</div>;
+    return <LoadingSpinner text="Loading..." />;
   }
 
   return (
@@ -442,31 +508,36 @@ const ExpertDashboard = () => {
               </span>
             )}
           </button>
+          <button 
+            className={`dashboard-tab ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
         </div>
-        
       </div>
-      
-      {error && <div className="dashboard-error">{error}</div>}
-      {message && (
-        <div className={`dashboard-message ${message.type}`}>
-          {message.text}
-        </div>
-      )}
-      
+
       {expertData && (
         <div className="dashboard-content">
-          {activeTab === 'profile' ? (
-            <>
+          {activeTab === 'profile' && (
+            <div className="profile-section">
               <div className="profile-card">
+                <div className="profile-image-container">
+                  <ProfileImageUploader 
+                    currentImageUrl={profileImageUrl}
+                    email={currentUser?.email}
+                    userId={currentUser?.uid}
+                    userType="experts"
+                    onImageUploaded={handleProfileImageUploaded}
+                    size="large"
+                    className="profile-image-uploader"
+                  />
+                </div>
+                
                 <div className="profile-header">
-                  <div className="profile-image">
-                    <img src={DEFAULT_PROFILE_IMAGE} alt={expertData.name} />
-                  </div>
                   <div className="profile-info">
-                    <h2>{expertData.name}</h2>
+                    <h2 >{expertData.name}</h2>
                     <p className="specialty">{expertData.specialty}</p>
-                    <p className="experience">{expertData.experience} Experience</p>
-                    <p className="email">{expertData.email}</p>
                     <div className="expert-rating">
                       <span>Rating: {expertData.rating || 'No ratings yet'}</span>
                       {expertData.rating && (
@@ -479,24 +550,84 @@ const ExpertDashboard = () => {
                   </div>
                 </div>
                 
-                {!isEditing ? (
-                  <button className="edit-profile-button" onClick={handleEditProfile}>
-                    Edit Profile
-                  </button>
-                ) : (
-                  <div className="edit-actions">
-                    <button className="cancel-button" onClick={handleCancelEdit}>
-                      Cancel
-                    </button>
-                    <button 
-                      className="save-button" 
-                      onClick={handleSaveProfile}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                <div className="profile-content">
+                  <div className="profile-section full-width">
+                    <h3 className="no-dot">About</h3>
+                    <div className="readonly-field">
+                      <textarea 
+                        value={expertData.bio || "No bio information provided."} 
+                        readOnly 
+                      />
+                    </div>
                   </div>
-                )}
+                  
+                  <div className="profile-grid">
+                    <div className="grid-item">
+                      <h3 className="no-dot">Qualifications</h3>
+                      <div className="readonly-field">
+                        <input 
+                          type="text" 
+                          value={expertData.qualifications || "No qualifications provided."} 
+                          readOnly 
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid-item">
+                      <h3 className="no-dot">Experience</h3>
+                      <div className="readonly-field">
+                        <input 
+                          type="text" 
+                          value={expertData.experience || "No experience provided."} 
+                          readOnly 
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid-item">
+                      <h3 className="no-dot">Phone</h3>
+                      <div className="readonly-field">
+                        <input 
+                          type="text" 
+                          value={expertData.phone || "No phone number provided."} 
+                          readOnly 
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid-item">
+                      <h3 className="no-dot">Email</h3>
+                      <div className="readonly-field">
+                        <input 
+                          type="email" 
+                          value={expertData.email || "No email provided."} 
+                          readOnly 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="button-container">
+                  {!isEditing ? (
+                    <button className="edit-profile-button" onClick={handleEditProfile}>
+                      Edit Profile
+                    </button>
+                  ) : (
+                    <div className="edit-actions">
+                      <button className="save-button" style={{backgroundColor: 'red', color: 'white'}} onClick={handleCancelEdit}>
+                        Cancel
+                      </button>
+                      <button 
+                        className="save-button" 
+                        onClick={handleSaveProfile}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {isEditing ? (
@@ -504,55 +635,59 @@ const ExpertDashboard = () => {
                   <div className="form-section">
                     <h3>Personal Information</h3>
                     
-                    <div className="form-group">
-                      <label htmlFor="name">Full Name</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="name">Full Name</label>
+                        <input
+                          type="text"
+                          id="name"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="specialty">Specialty</label>
+                        <input
+                          type="text"
+                          id="specialty"
+                          name="specialty"
+                          value={formData.specialty}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
                     </div>
                     
-                    <div className="form-group">
-                      <label htmlFor="specialty">Specialty</label>
-                      <input
-                        type="text"
-                        id="specialty"
-                        name="specialty"
-                        value={formData.specialty}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="experience">Years of Experience</label>
+                        <input
+                          type="text"
+                          id="experience"
+                          name="experience"
+                          value={formData.experience}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="qualifications">Qualifications</label>
+                        <input
+                          type="text"
+                          id="qualifications"
+                          name="qualifications"
+                          value={formData.qualifications}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
                     </div>
                     
-                    <div className="form-group">
-                      <label htmlFor="experience">Years of Experience</label>
-                      <input
-                        type="text"
-                        id="experience"
-                        name="experience"
-                        value={formData.experience}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="qualifications">Qualifications</label>
-                      <input
-                        type="text"
-                        id="qualifications"
-                        name="qualifications"
-                        value={formData.qualifications}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
+                    <div className="form-group full-width">
                       <label htmlFor="bio">Professional Bio</label>
                       <textarea
                         id="bio"
@@ -564,16 +699,30 @@ const ExpertDashboard = () => {
                       />
                     </div>
                     
-                    <div className="form-group">
-                      <label htmlFor="phone">Phone Number</label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="phone">Phone Number</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="email">Email Address</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={currentUser?.email || ""}
+                          disabled
+                          className="disabled-input"
+                        />
+                      </div>
                     </div>
                   </div>
                   
@@ -611,95 +760,7 @@ const ExpertDashboard = () => {
                 </div>
               ) : (
                 <div className="profile-details">
-                  <div className="profile-section">
-                    <h3>Qualifications</h3>
-                    <p>{expertData.qualifications}</p>
-                  </div>
-                  
-                  <div className="profile-section">
-                    <h3>About</h3>
-                    <p>{expertData.bio}</p>
-                  </div>
-                  
-                  <div className="profile-section">
-                    <h3>Ratings & Reviews</h3>
-                    <div className="ratings-summary">
-                      <div className="rating-display">
-                        <span className="rating-value">{expertData.rating || 'No ratings yet'}</span>
-                        {expertData.rating && (
-                          <RatingStars initialRating={Math.round(expertData.rating)} readOnly={true} />
-                        )}
-                        <span className="rating-count">({expertData.ratings ? expertData.ratings.length : 0} ratings)</span>
-                      </div>
-                      
-                      {expertData.ratings && expertData.ratings.length > 0 && (
-                        <div className="rating-breakdown">
-                          <h4>Rating Breakdown</h4>
-                          <div className="rating-stats">
-                            {[5, 4, 3, 2, 1].map(star => {
-                              const count = expertData.ratings.filter(r => Math.round(r.value) === star).length;
-                              const percentage = expertData.ratings.length > 0 
-                                ? Math.round((count / expertData.ratings.length) * 100) 
-                                : 0;
-                              
-                              return (
-                                <div key={star} className="rating-bar">
-                                  <span className="star-label">{star} stars</span>
-                                  <div className="progress-bar">
-                                    <div 
-                                      className="progress-fill" 
-                                      style={{ width: `${percentage}%` }}
-                                    ></div>
-                                  </div>
-                                  <span className="percentage">{percentage}%</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="profile-section">
-                    <h3>Contact</h3>
-                    <p>Phone: {expertData.phone}</p>
-                    <p>Email: {expertData.email}</p>
-                  </div>
-                  
-                  <div className="profile-section">
-                    <h3>User Comments ({expertData.commentCount || 0})</h3>
-                    {expertData.comments && expertData.comments.length > 0 ? (
-                      <div className="comments-list">
-                        {expertData.comments.sort((a, b) => {
-                          const dateA = a.timestamp instanceof Date ? a.timestamp : a.timestamp.toDate();
-                          const dateB = b.timestamp instanceof Date ? b.timestamp : b.timestamp.toDate();
-                          return dateB - dateA;
-                        }).map(comment => (
-                          <div key={comment.id} className="dashboard-comment-item">
-                            <div className="comment-avatar" style={{ 
-                              backgroundColor: comment.userName ? getAvatarColor(comment.userName) : '#4E3580' 
-                            }}>
-                              {comment.userName ? getInitials(comment.userName) : 'U'}
-                            </div>
-                            <div className="comment-content">
-                              <div className="comment-header">
-                                <strong className="comment-author">{comment.userName}</strong>
-                                <span className="comment-date">
-                                  {new Date(comment.timestamp.seconds * 1000).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <p className="comment-text">{comment.text}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="no-comments">No comments yet.</p>
-                    )}
-                  </div>
-                  
-                  <div className="profile-section">
+                  <div className="profile-section full-width">
                     <h3>Available Appointment Slots</h3>
                     {expertData.availableSlots && expertData.availableSlots.length > 0 ? (
                       <div className="slots-list">
@@ -708,7 +769,7 @@ const ExpertDashboard = () => {
                             key={slot.id} 
                             className={`slot-item ${slot.booked ? 'booked' : ''}`}
                           >
-                            <span>{slot.time}</span>
+                            <span className="slot-time">{slot.time}</span>
                             {slot.booked && <span className="booked-badge">Booked</span>}
                           </div>
                         ))}
@@ -719,135 +780,204 @@ const ExpertDashboard = () => {
                   </div>
                 </div>
               )}
-            </>
-          ) : activeTab === 'appointments' && (
+            </div>
+          )}
+
+          {activeTab === 'appointments' && (
             <div className="appointments-section">
-              <div className="section-header">
-              <h2>Manage Your Appointments</h2>
-                <button 
-                  className="refresh-button" 
-                  onClick={refreshBookings}
-                  disabled={loadingBookings}
-                >
-                  {loadingBookings ? 'Refreshing...' : 'Refresh'}
-                </button>
+              <div className="dashboard-grid">
+                <div className="upcoming-appointments">
+                  <h3>Upcoming Appointments</h3>
+                  {bookings.filter(booking => booking.status === 'confirmed').length > 0 ? (
+                    <div className="bookings-list">
+                      {bookings
+                        .filter(booking => booking.status === 'confirmed')
+                        .map(booking => (
+                          <div key={booking.id} className="booking-card confirmed">
+                            <div className="booking-info">
+                              <h4>Appointment with {booking.userName}</h4>
+                              <p><strong>Time:</strong> {booking.slotTime}</p>
+                              <p><strong>Email:</strong> {booking.userEmail}</p>
+                              <p><strong>Confirmed:</strong> {formatDate(booking.updatedAt)}</p>
+                            </div>
+                            <div className="booking-actions">
+                              {booking.meetingLink && (
+                                <a 
+                                  href={booking.meetingLink} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="meeting-link"
+                                >
+                                  Join Meeting
+                                </a>
+                              )}
+                              <button 
+                                className="meeting-link" style={{backgroundColor:'red', color: 'white'}}
+                                onClick={() => handleCancelBooking(booking.id)}
+                              >
+                                Cancel Appointment
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="no-upcoming">No upcoming appointments.</p>
+                  )}
+                </div>
+               
+                        
+                <div className="appointments-section">
+                  <div className="section-header">
+                    <h2>Available Appointments</h2>
+                    <button 
+                      className="refresh-button" 
+                      onClick={refreshBookings}
+                      disabled={loadingBookings}
+                    >
+                      {loadingBookings ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                  </div>
+                  
+                  {loadingBookings ? (
+                    <div className="loading-bookings">Loading your appointments...</div>
+                  ) : bookings.length === 0 ? (
+                    <div className="no-bookings">You don't have any appointment requests yet.</div>
+                  ) : (
+                    <>
+                      <div className="booking-requests">
+                        <h3>Pending Requests</h3>
+                        {bookings.filter(booking => booking.status === 'pending').length > 0 ? (
+                          <div className="bookings-list">
+                            {bookings
+                              .filter(booking => booking.status === 'pending')
+                              .map(booking => (
+                                <div key={booking.id} className="booking-card pending">
+                                  <div className="booking-info">
+                                    <h4>Request from {booking.userName}</h4>
+                                    <p><strong>Time:</strong> {booking.slotTime}</p>
+                                    <p><strong>Email:</strong> {booking.userEmail}</p>
+                                    <p><strong>Requested:</strong> {formatDate(booking.createdAt)}</p>
+                                    {booking.notes && <p><strong>Notes:</strong> {booking.notes}</p>}
+                                  </div>
+                                  <div className="booking-actions">
+                                    <button 
+                                      className="confirm-button meeting-link" style={{backgroundColor:'#4E3580', color: 'white'}}
+                                      onClick={() => handleConfirmBooking(booking.id)}
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button 
+                                      className="reject-button meeting-link" style={{backgroundColor:'red', color: 'white'}}
+                                      onClick={() => handleRejectBooking(booking.id)}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="no-pending">No pending requests.</p>
+                        )}
+                      </div>
+                      
+                    </>
+                  )}
+                </div>
+                
+                
               </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="settings-section">
+            
               
-              {loadingBookings ? (
-                <div className="loading-bookings">Loading your appointments...</div>
-              ) : bookings.length === 0 ? (
-                <div className="no-bookings">You don't have any appointment requests yet.</div>
-              ) : (
-                <>
-                  <div className="booking-requests">
-                    <h3>Pending Requests</h3>
-                    {bookings.filter(booking => booking.status === 'pending').length > 0 ? (
-                      <div className="bookings-list">
-                        {bookings
-                          .filter(booking => booking.status === 'pending')
-                          .map(booking => (
-                            <div key={booking.id} className="booking-card pending">
-                              <div className="booking-info">
-                                <h4>Request from {booking.userName}</h4>
-                                <p><strong>Time:</strong> {booking.slotTime}</p>
-                                <p><strong>Email:</strong> {booking.userEmail}</p>
-                                <p><strong>Requested:</strong> {formatDate(booking.createdAt)}</p>
-                                {booking.notes && <p><strong>Notes:</strong> {booking.notes}</p>}
-                              </div>
-                              <div className="booking-actions">
-                                <button 
-                                  className="confirm-button"
-                                  onClick={() => handleConfirmBooking(booking.id)}
-                                >
-                                  Confirm
-                                </button>
-                                <button 
-                                  className="reject-button"
-                                  onClick={() => handleRejectBooking(booking.id)}
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            </div>
-                          ))}
+              <div className="settings-card">
+                <div className="settings-group">
+                  <h3 >Ratings & Reviews</h3>
+                  <div className="ratings-summary">
+                    <div className="rating-display">
+                      <span className="rating-value">{expertData.rating || 'N/A'}</span>
+                      <div className="rating-stars">
+                        {expertData.rating && (
+                          <RatingStars initialRating={Math.round(expertData.rating)} readOnly={true} />
+                        )}
+                        <span className="rating-count">
+                          ({expertData.ratings ? expertData.ratings.length : 0} ratings)
+                        </span>
                       </div>
-                    ) : (
-                      <p className="no-pending">No pending requests.</p>
+                    </div>
+                    
+                    {expertData.ratings && expertData.ratings.length > 0 && (
+                      <div className="rating-breakdown">
+                        {[5, 4, 3, 2, 1].map(star => {
+                          const count = expertData.ratings.filter(r => Math.round(r.value) === star).length;
+                          const percentage = expertData.ratings.length > 0 
+                            ? Math.round((count / expertData.ratings.length) * 100) 
+                            : 0;
+                          
+                          return (
+                            <div key={star} className="rating-bar">
+                              <span className="star-label">{star} stars</span>
+                              <div className="progress-bar">
+                                <div 
+                                  className="progress-fill" 
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="percentage">{percentage}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
-                  
-                  <div className="upcoming-appointments">
-                    <h3>Upcoming Appointments</h3>
-                    {bookings.filter(booking => booking.status === 'confirmed').length > 0 ? (
-                      <div className="bookings-list">
-                        {bookings
-                          .filter(booking => booking.status === 'confirmed')
-                          .sort((a, b) => {
-                            // Sort by day of week and time
-                            const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                            const [aDay] = a.slotTime.split(' ', 1);
-                            const [bDay] = b.slotTime.split(' ', 1);
-                            return dayOrder.indexOf(aDay) - dayOrder.indexOf(bDay);
-                          })
-                          .map(booking => (
-                            <div key={booking.id} className="booking-card confirmed">
-                              <div className="booking-info">
-                                <h4>Appointment with {booking.userName}</h4>
-                                <p><strong>Time:</strong> {booking.slotTime}</p>
-                                <p><strong>Email:</strong> {booking.userEmail}</p>
-                                <p><strong>Confirmed:</strong> {formatDate(booking.updatedAt)}</p>
-                              </div>
-                              <div className="booking-actions">
-                                {booking.meetingLink && (
-                                  <a 
-                                    href={booking.meetingLink} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="meeting-link"
-                                  >
-                                    Join Meeting
-                                  </a>
-                                )}
-                                <button 
-                                  className="reject-button"
-                                  onClick={() => handleCancelBooking(booking.id)}
-                                >
-                                  Cancel Appointment
-                                </button>
-                              </div>
+                </div>
+
+                <div className="settings-group">
+                  <h3>User Comments ({expertData.commentCount || 0})</h3>
+                  <div className="comments-list">
+                    {expertData.comments && expertData.comments.length > 0 ? (
+                      expertData.comments.sort((a, b) => {
+                        const dateA = a.timestamp instanceof Date ? a.timestamp : a.timestamp.toDate();
+                        const dateB = b.timestamp instanceof Date ? b.timestamp : b.timestamp.toDate();
+                        return dateB - dateA;
+                      }).map(comment => (
+                        <div key={comment.id} className="dashboard-comment-item">
+                          <div className="comment-avatar" style={{ 
+                            backgroundColor: comment.userName ? getAvatarColor(comment.userName) : '#4E3580' 
+                          }}>
+                            {comment.userName ? getInitials(comment.userName) : 'U'}
+                          </div>
+                          <div className="comment-content">
+                            <div className="comment-header">
+                              <span className="comment-author">{comment.userName}</span>
+                              <span className="comment-date">
+                                {new Date(comment.timestamp.seconds * 1000).toLocaleDateString()}
+                              </span>
                             </div>
-                          ))}
-                      </div>
+                            <p className="comment-text">{comment.text}</p>
+                            <div className="comment-likes">
+                              <i className="fas fa-heart"></i>
+                              <span>{comment.likesCount || 0} likes</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
                     ) : (
-                      <p className="no-upcoming">No upcoming appointments.</p>
+                      <p className="no-comments">No comments yet.</p>
                     )}
                   </div>
-                  
-                  <div className="past-appointments">
-                    <h3>Past & Rejected Appointments</h3>
-                    {bookings.filter(booking => booking.status === 'rejected' || booking.status === 'cancelled').length > 0 ? (
-                      <div className="bookings-list">
-                        {bookings
-                          .filter(booking => booking.status === 'rejected' || booking.status === 'cancelled')
-                          .map(booking => (
-                            <div key={booking.id} className={`booking-card ${booking.status}`}>
-                              <div className="booking-info">
-                                <h4>Request from {booking.userName}</h4>
-                                <p><strong>Time:</strong> {booking.slotTime}</p>
-                                <p><strong>Status:</strong> {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</p>
-                                {booking.rejectionReason && (
-                                  <p><strong>Reason:</strong> {booking.rejectionReason}</p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="no-past">No past or rejected appointments.</p>
-                    )}
+                  <div className="likes-analytics">
+                    <LikesStatistics comments={expertData.comments || []} />
                   </div>
-                </>
-              )}
+                </div>
+
+               
+              </div>
             </div>
           )}
         </div>
@@ -856,4 +986,4 @@ const ExpertDashboard = () => {
   );
 };
 
-export default ExpertDashboard; 
+export default ExpertDashboard;

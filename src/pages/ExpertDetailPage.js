@@ -1,13 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import BookingSlot from '../components/BookingSlot';
-import RatingStars from '../components/RatingStars';
 import CommentSection from '../components/CommentSection';
 import expertsService from '../services/expertsService';
 import bookingService from '../services/bookingService';
 import { auth } from '../services/firebase';
+import RatingStars from '../components/RatingStars';
+import useProfileImage from '../hooks/useProfileImage';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './ExpertDetailPage.css';
 
+const DEFAULT_PROFILE_IMAGE = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+
+// BookingSlot component
+const BookingSlot = ({ slot, expertId, onBook, currentUser, onLoginRedirect }) => {
+  const [isBooking, setIsBooking] = useState(false);
+
+  const handleBookClick = async () => {
+    if (!currentUser) {
+      onLoginRedirect();
+      return;
+    }
+
+    if (!slot.booked && !slot.pending && !isBooking) {
+      setIsBooking(true); // Set loading state immediately
+      await onBook(expertId, slot.id);
+      setIsBooking(false);
+    }
+  };
+
+  const getSlotStatus = () => {
+    if (isBooking) return 'booking';
+    if (slot.booked) return 'booked';
+    if (slot.pending) return 'pending';
+    if (slot.cancelled) return 'cancelled';
+    if (slot.completed) return 'completed';
+    return 'available';
+  };
+
+  const status = getSlotStatus();
+
+  return (
+    <div className={`booking-slot ${status}`}>
+      <div className="slot-time">{slot.time}</div>
+      <button 
+        className={`book-button ${status}`}
+        onClick={handleBookClick}
+        disabled={status !== 'available'}
+      >
+        {status === 'booking' ? 'Booking...' : 
+         status === 'booked' ? 'Booked' : 
+         status === 'pending' ? 'Request Pending' : 
+         'Book Now'}
+      </button>
+    </div>
+  );
+};
+
+// Main ExpertDetailPage component
 const ExpertDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,7 +70,7 @@ const ExpertDetailPage = () => {
   const [recentBooking, setRecentBooking] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
     });
 
@@ -31,30 +80,32 @@ const ExpertDetailPage = () => {
   useEffect(() => {
     const fetchExpert = async () => {
       try {
-        const data = await expertsService.getExpertById(id);
-        if (!data) {
-          setError("Expert not found");
+        const expertData = await expertsService.getExpertById(id);
+        if (!expertData) {
+          setError('Expert not found');
           return;
         }
-        setExpert(data);
+
+        setExpert(expertData);
         
-        // If user is logged in, check if they've already rated this expert
-        if (currentUser && data.ratings) {
-          const userPreviousRating = data.ratings.find(r => r.userId === currentUser.uid);
-          if (userPreviousRating) {
-            setUserRating(userPreviousRating.value);
+        if (currentUser && expertData.ratings) {
+          const userRating = expertData.ratings.find(r => r.userId === currentUser.uid);
+          if (userRating) {
+            setUserRating(userRating.value);
           }
         }
       } catch (error) {
-        console.error('Error fetching expert details:', error);
-        setError("Failed to load expert details");
+        console.error('Error fetching expert:', error);
+        setError('Failed to load expert details');
       } finally {
         setLoading(false);
       }
     };
 
     fetchExpert();
-  }, [id, navigate, currentUser]);
+  }, [id, currentUser]);
+
+  const { imageUrl } = useProfileImage(expert?.id, expert?.profileImageURL);
 
   const handleBookSlot = async (expertId, slotId) => {
     if (!currentUser) {
@@ -67,39 +118,48 @@ const ExpertDetailPage = () => {
     }
 
     try {
-      // Create user data object for booking
+      // Update the slot state immediately in the UI
+      setExpert(prev => ({
+        ...prev,
+        availableSlots: prev.availableSlots.map(slot => 
+          slot.id === slotId ? { ...slot, pending: true } : slot
+        )
+      }));
+
       const userData = {
         userId: currentUser.uid,
         userName: currentUser.displayName || currentUser.email.split('@')[0],
         userEmail: currentUser.email,
-        notes: ''  // You could add a notes field in the future
+        notes: ''
       };
 
-      // Request the booking
       const response = await bookingService.requestBooking(expertId, slotId, userData);
       
-      setExpert(response.expert);
-      setMessage({ text: response.message, type: 'success' });
-      
-      // Store the recent booking data for display
-      const bookedSlot = expert.availableSlots.find(slot => slot.id === parseInt(slotId));
-      setRecentBooking({
-        expertName: expert.name,
-        slotTime: bookedSlot.time,
-        bookingId: response.bookingId,
-        status: 'pending'
+      // Update with the server response
+      setExpert(prev => ({
+        ...prev,
+        availableSlots: response.expert.availableSlots
+      }));
+
+      setMessage({ 
+        text: '✓ Booking request sent to expert!', 
+        type: 'success-animated' 
       });
       
-      // Navigate to user dashboard to show the booking immediately
       setTimeout(() => {
-        navigate('/user-dashboard', { 
-          state: { refreshBookings: true }
-        });
-      }, 5000);
+        setMessage({ text: '', type: '' });
+      }, 3000);
+
     } catch (error) {
+      // Revert the slot state if booking failed
+      setExpert(prev => ({
+        ...prev,
+        availableSlots: prev.availableSlots.map(slot => 
+          slot.id === slotId ? { ...slot, pending: false } : slot
+        )
+      }));
+
       setMessage({ text: error.message || 'Booking failed', type: 'error' });
-      
-      // Clear error message after 3 seconds
       setTimeout(() => {
         setMessage({ text: '', type: '' });
       }, 3000);
@@ -122,14 +182,12 @@ const ExpertDetailPage = () => {
       setUserRating(ratingValue);
       setMessage({ text: response.message, type: 'success' });
       
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setMessage({ text: '', type: '' });
       }, 3000);
     } catch (error) {
       setMessage({ text: error.message || 'Rating failed', type: 'error' });
       
-      // Clear error message after 3 seconds
       setTimeout(() => {
         setMessage({ text: '', type: '' });
       }, 3000);
@@ -145,7 +203,7 @@ const ExpertDetailPage = () => {
   };
 
   if (loading) {
-    return <div className="loading-container">Loading expert information...</div>;
+    return <LoadingSpinner text="Loading expert information..." />;
   }
 
   if (error) {
@@ -153,7 +211,7 @@ const ExpertDetailPage = () => {
       <div className="error-container">
         <h2>{error}</h2>
         <button className="back-button" onClick={goBack}>
-          &larr; Back to Experts
+          ← Back to Experts
         </button>
       </div>
     );
@@ -162,7 +220,7 @@ const ExpertDetailPage = () => {
   return (
     <div className="expert-detail-container">
       <button className="back-button" onClick={goBack}>
-        &larr; Back to Experts
+        ← Back to Experts
       </button>
       
       {message.text && (
@@ -196,19 +254,25 @@ const ExpertDetailPage = () => {
       <div className="expert-profile">
         <div className="expert-profile-header">
           <div className="expert-image">
-            <img src={expert.image} alt={expert.name} />
+            <img 
+              src={imageUrl} 
+              alt={expert.name} 
+            />
           </div>
           <div className="expert-info">
             <h1>{expert.name}</h1>
-            <p className="specialty">{expert.specialty}</p>
-            <p className="experience">{expert.experience} Experience</p>
+            <div className="specialty-badge">
+              <p className="specialty">{expert.specialty}</p>
+            </div>
+            <p className="experience experience-text">{expert.experience} Experience</p>
             <div className="qualifications">
               <h3>Qualifications</h3>
               <p>{expert.qualifications}</p>
             </div>
             <div className="rating-section">
               <div className="current-rating">
-                <span>Rating: {expert.rating || 'No ratings yet'}</span>
+                <span className="rating-label">Rating:</span>
+                <span className="rating-value">{expert.rating || 'No ratings yet'}</span>
                 <RatingStars initialRating={Math.round(expert.rating || 0)} readOnly={true} />
                 <span className="rating-count">({expert.ratings ? expert.ratings.length : 0} ratings)</span>
               </div>
@@ -270,4 +334,4 @@ const ExpertDetailPage = () => {
   );
 };
 
-export default ExpertDetailPage; 
+export default ExpertDetailPage;

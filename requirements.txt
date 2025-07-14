@@ -1,0 +1,8 @@
+Flask
+flask_cors
+openai
+redis
+langdetect
+python-dotenv 
+pdfplumber 
+werkzeug

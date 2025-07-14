@@ -1,0 +1,94 @@
+.admin-login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+  background: linear-gradient(135deg, #4E3580 0%, #2c1d4d 100%);
+}
+
+.admin-login-container {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 40px;
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.admin-login-container h1 {
+  color: #4E3580;
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.admin-login-container p {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.admin-login-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.admin-form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-form-group input {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.admin-form-group input:focus {
+  border-color: #4E3580;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(78, 53, 128, 0.1);
+}
+
+.admin-login-button {
+  margin-top: 10px;
+  padding: 14px;
+  background-color: #4E3580;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.admin-login-button:hover {
+  background-color: #3c2966;
+}
+
+.admin-login-button:disabled {
+  background-color: #8268b5;
+  cursor: not-allowed;
+} 

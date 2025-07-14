@@ -52,29 +52,6 @@
   width: 100%;
 }
 
-.loading {
-  text-align: center;
-  font-size: clamp(1.1rem, 2vw, 1.2rem);
-  color: var(--text-light);
-  padding: 50px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-}
-
-.loading::after {
-  content: '';
-  width: 40px;
-  height: 40px;
-  margin-top: 20px;
-  border: 3px solid rgba(200, 218, 43, 0.3);
-  border-radius: 50%;
-  border-top-color: var(--secondary-color);
-  animation: spin 1s ease-in-out infinite;
-}
-
 .error-message {
   text-align: center;
   color: #e53935;
@@ -118,8 +95,4 @@
   .search-input {
     padding: 10px 15px;
   }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 } 
